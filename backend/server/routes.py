@@ -10,7 +10,6 @@ from server.db import sessions
 api = Blueprint("api", __name__)
 
 # INTERPRETATION
-
 @api.route("/interpret", methods=["POST"])
 def interpret():
 
@@ -43,7 +42,6 @@ def recommend(score):
 
 
 # CONTROL ROUTES
-
 @api.route("/session/start", methods=["POST"])
 def api_start():
     data = request.json or {}
@@ -76,3 +74,50 @@ def api_summary(sid):
         return jsonify({"error": "not found"}), 404
 
     return jsonify(doc)
+
+# LIVE INTERPRETATION
+@api.route("/session/live-interpreted", methods=["GET"])
+def live_interpreted():
+
+    live = get_live()
+
+    if "error" in live:
+        return jsonify(live)
+
+    score = live.get("attention_index", 0)
+
+    if score >= 70:
+        label = "Strong Attention Response"
+    elif score >= 55:
+        label = "Developing Attention"
+    else:
+        label = "Needs Support"
+
+    return jsonify({
+        **live,
+        "label": label,
+        "next_games": recommend(score)
+    })
+
+
+@api.route("/progress/<userId>")
+def progress(userId):
+
+    docs = list(
+        sessions.find(
+            {"userId": userId},
+            {"_id":0, "summary":1, "startTime":1, "nsi":1}
+        )
+    )
+
+    trend = []
+
+    for d in docs:
+        if d.get("summary"):
+            trend.append({
+                "date": d["startTime"],
+                "mean": d["summary"]["mean_attention"],
+                "nsi": d.get("nsi")
+            })
+
+    return jsonify(trend)

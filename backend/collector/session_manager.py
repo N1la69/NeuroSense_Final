@@ -95,8 +95,35 @@ class SessionRecorder:
             {"$set": {
                 "summary": summary,
                 "endTime": datetime.utcnow(),
-                "nsi": "PENDING"
+                "nsi": self.compute_nsi()
             }}
         )
 
         return self.session_id
+    
+
+    def compute_nsi(self):
+
+        doc = sessions.find_one({"sessionId": self.session_id})
+        feats = doc.get("features", [])
+
+        # Not enough windows for stability judgement
+        if len(feats) < 5:
+            return "INSUFFICIENT"
+
+        scores = [f["attention_index"] for f in feats]
+
+        mean = sum(scores) / len(scores)
+
+        std = (sum((s - mean) ** 2 for s in scores) / len(scores)) ** 0.5
+
+        cv = std / (mean + 1e-6)   # coefficient of variation
+
+        if cv < 0.15:
+            return "STABLE"
+
+        if cv < 0.30:
+            return "MODERATE"
+
+        return "FLUCTUATING"
+
