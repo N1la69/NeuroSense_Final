@@ -2,9 +2,9 @@ import { useState } from "react";
 import { View, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { login } from "@/utils/api";
-import { saveToken } from "@/utils/storage";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
+import { saveParent } from "@/utils/storage";
 
 export default function Login() {
   const router = useRouter();
@@ -15,9 +15,11 @@ export default function Login() {
   const onLogin = async () => {
     const res = await login({ email, password });
 
-    if (res.token) {
-      await saveToken(res.token);
+    if (res.parentId) {
+      await saveParent(res.parentId);
       router.replace("/(dashboard)/home");
+    } else {
+      alert(res.error || "Login failed");
     }
   };
 

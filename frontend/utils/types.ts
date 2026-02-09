@@ -9,6 +9,13 @@ export interface SignupPayload {
   password: string;
 }
 
+export interface AddChildPayload {
+  parentId: string;
+  childName: string;
+  age: number;
+  gender: string;
+}
+
 export interface AuthResponse {
   token: string;
   parentId: string;

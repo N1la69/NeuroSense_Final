@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { signup } from "@/utils/api";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
+import { saveParent } from "@/utils/storage";
 
 export default function Signup() {
   const router = useRouter();
@@ -13,8 +14,15 @@ export default function Signup() {
   const [password, setPassword] = useState("");
 
   const onSignup = async () => {
-    await signup({ name, email, password });
-    router.replace("/(auth)/login");
+    const res = await signup({ name, email, password });
+
+    if (res.parentId) {
+      await saveParent(res.parentId);
+
+      router.replace("/(auth)/child");
+    } else {
+      alert(res.error || "Signup failed");
+    }
   };
 
   return (

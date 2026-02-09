@@ -1,17 +1,12 @@
-import { getToken } from "./storage";
-import { LoginPayload, SignupPayload } from "./types";
+import { AddChildPayload, LoginPayload, SignupPayload } from "./types";
 
 const BASE = "http://192.168.31.17:5000/api"; // LAPTOP IP
 
 async function request(path: string, options: RequestInit = {}) {
-  const token = await getToken();
-
   const headers: any = {
     "Content-Type": "application/json",
     ...options.headers,
   };
-
-  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(`${BASE}${path}`, {
     ...options,
@@ -30,6 +25,12 @@ export const login = (data: LoginPayload) =>
 
 export const signup = (data: SignupPayload) =>
   request("/auth/signup", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const addChild = (data: AddChildPayload) =>
+  request("/auth/add-child", {
     method: "POST",
     body: JSON.stringify(data),
   });

@@ -1,8 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 
-export const saveToken = (token: string) =>
-  SecureStore.setItemAsync("token", token);
+export const saveParent = (id: string) =>
+  SecureStore.setItemAsync("parentId", id);
 
-export const getToken = () => SecureStore.getItemAsync("token");
+export const getParent = () => SecureStore.getItemAsync("parentId");
 
-export const clearToken = () => SecureStore.deleteItemAsync("token");
+export const clearParent = () => SecureStore.deleteItemAsync("parentId");
