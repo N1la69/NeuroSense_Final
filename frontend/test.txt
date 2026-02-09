@@ -1,1 +1,0 @@
-React Native setup will be done
