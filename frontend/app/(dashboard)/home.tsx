@@ -1,6 +1,11 @@
 import Button from "@/components/Button";
-import { getLiveInterpreted, startSession, stopSession } from "@/utils/api";
-import { getParent } from "@/utils/storage";
+import {
+  getLiveInterpreted,
+  startSession,
+  startSessionForChild,
+  stopSession,
+} from "@/utils/api";
+import { getChild, getParent } from "@/utils/storage";
 import { useState, useEffect } from "react";
 import { View, Text } from "react-native";
 
@@ -24,8 +29,9 @@ export default function Home() {
 
   const onStart = async () => {
     const parentId = await getParent();
+    const childId = await getChild();
 
-    await startSession("Follow the Animal");
+    await startSessionForChild(childId!, "Follow the Animal");
     setRunning(true);
   };
 

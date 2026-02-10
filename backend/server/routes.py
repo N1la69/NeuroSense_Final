@@ -46,10 +46,13 @@ def recommend(score):
 def api_start():
     data = request.json or {}
 
-    user = data.get("userId", "test_user")
+    childId = data.get("childId")
     game = data.get("game", "Follow the Animal")
 
-    return jsonify(start_session(user, game))
+    if not childId:
+        return jsonify({"error": "childId required"}), 400
+
+    return jsonify(start_session(childId, game))
 
 
 @api.route("/session/stop", methods=["POST"])
@@ -121,3 +124,21 @@ def progress(userId):
             })
 
     return jsonify(trend)
+
+# SESSION HISTORY
+@api.route("/sessions/<childId>", methods=["GET"])
+def sessions_by_child(childId):
+
+    docs = list(
+        sessions.find(
+            {"userId": childId},
+            {"_id": 0,
+             "sessionId":1,
+             "game":1,
+             "summary":1,
+             "nsi":1,
+             "startTime":1}
+        )
+    )
+
+    return jsonify(docs)

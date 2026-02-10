@@ -1,17 +1,72 @@
-import { TouchableOpacity, Text } from "react-native";
+import {
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
 
-export default function Button({ title, onPress }: any) {
+type ButtonProps = {
+  title: string;
+  onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  variant?: "primary" | "secondary";
+};
+
+const Button = ({
+  title,
+  onPress,
+  disabled = false,
+  loading = false,
+  variant = "primary",
+}: ButtonProps) => {
+  const isDisabled = disabled || loading;
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={{
-        backgroundColor: "#2563eb",
-        padding: 12,
-        borderRadius: 10,
-        marginVertical: 6,
-      }}
+      activeOpacity={0.8}
+      disabled={isDisabled}
+      style={[
+        styles.base,
+        variant === "primary" ? styles.primary : styles.secondary,
+        isDisabled && styles.disabled,
+      ]}
+      accessibilityRole="button"
     >
-      <Text style={{ color: "white", textAlign: "center" }}>{title}</Text>
+      {loading ? (
+        <ActivityIndicator color="#fff" />
+      ) : (
+        <Text style={styles.text}>{title}</Text>
+      )}
     </TouchableOpacity>
   );
-}
+};
+
+export default Button;
+
+const styles = StyleSheet.create({
+  base: {
+    padding: 13,
+    borderRadius: 12,
+    marginVertical: 6,
+    alignItems: "center",
+  },
+
+  primary: {
+    backgroundColor: "#4f7cff",
+  },
+
+  secondary: {
+    backgroundColor: "#e8eeff",
+  },
+
+  disabled: {
+    opacity: 0.6,
+  },
+
+  text: {
+    color: "white",
+    fontWeight: "600",
+  },
+});

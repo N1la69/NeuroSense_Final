@@ -42,6 +42,15 @@ export const startSession = (game: string) =>
     body: JSON.stringify({ game }),
   });
 
+export const startSessionForChild = (childId: string, game: string) =>
+  request("/session/start", {
+    method: "POST",
+    body: JSON.stringify({ childId, game }),
+  });
+
 export const getLiveInterpreted = () => request("/session/live-interpreted");
 
 export const stopSession = () => request("/session/stop", { method: "POST" });
+
+// ---------- EEG SESSION HISTORY ----------
+export const getSessions = (childId: string) => request(`/sessions/${childId}`);
