@@ -54,3 +54,9 @@ export const stopSession = () => request("/session/stop", { method: "POST" });
 
 // ---------- EEG SESSION HISTORY ----------
 export const getSessions = (childId: string) => request(`/sessions/${childId}`);
+
+export const getDashboard = (childId: string) =>
+  request(`/dashboard/${childId}`);
+
+export const getSessionDetail = (sid: string) =>
+  request(`/session/detail/${sid}`);

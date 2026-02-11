@@ -142,3 +142,31 @@ def sessions_by_child(childId):
     )
 
     return jsonify(docs)
+
+@api.route("/session/detail/<sid>", methods=["GET"])
+def session_detail(sid):
+
+    doc = sessions.find_one(
+        {"sessionId": sid},
+        {"_id": 0}
+    )
+
+    if not doc:
+        return jsonify({"error": "not found"}), 404
+
+
+    # Prepare a light trend array for graph
+    trend = [
+        f.get("attention_index", 0) / 100
+        for f in doc.get("features", [])
+    ]
+
+    return jsonify({
+        "sessionId": doc["sessionId"],
+        "game": doc.get("game"),
+        "summary": doc.get("summary"),
+        "nsi": doc.get("nsi"),
+        "trend": trend,
+        "startTime": doc.get("startTime"),
+        "endTime": doc.get("endTime")
+    })
