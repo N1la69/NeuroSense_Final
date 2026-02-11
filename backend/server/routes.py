@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from processing.features import extract_features
+from ai.models.inference import predict_from_device_features
 from server.service import (
     start_session,
     stop_session,
@@ -14,7 +14,16 @@ api = Blueprint("api", __name__)
 def interpret():
 
     feats = request.json
-    score = feats["attention_index"]
+
+    # ----- AI PREDICTION -----
+    try:
+        score = predict_from_device_features(feats)
+    except Exception as e:
+        print("AI error:", e)
+
+        # fallback to old heuristic if model fails
+        score = feats.get("attention_index", 0)
+
 
     if score >= 70:
         label = "Strong Attention Response"
@@ -23,12 +32,12 @@ def interpret():
     else:
         label = "Needs Support"
 
+
     return jsonify({
         "score": score,
         "label": label,
         "next_games": recommend(score)
     })
-
 
 def recommend(score):
 

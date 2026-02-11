@@ -10,12 +10,12 @@ def load():
     global model
     model = joblib.load(MODEL_PATH)
 
+try:
+    load()
+except:
+    print("Model not loaded yet")
 
 def predict_from_device_features(f):
-
-    """
-    f: dict from processing/features.py
-    """
 
     if model is None:
         load()
@@ -25,7 +25,7 @@ def predict_from_device_features(f):
         f["entropy"],
         f["engagement"],
         f["variability"],
-        0.0    # no p300 in device → neutral
+        0.0   # p300 proxy not available on device
     ]])
 
     p = model.predict_proba(x)[0, 1]
