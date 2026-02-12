@@ -1,10 +1,9 @@
 import threading
-from collector.serial_reader import stream_eeg
 from collector.session_manager import SessionRecorder
+from collector.serial_reader import start_stream, stop_stream
 
 # ----- GLOBAL STATE -----
 current_recorder = None
-stream_thread = None
 lock = threading.Lock()
 
 live_features = {}
@@ -24,7 +23,8 @@ def _callback(sample):
 
 
 def start_session(user_id, game):
-    global current_recorder, stream_thread, running
+
+    global current_recorder, running
 
     with lock:
         if running:
@@ -33,14 +33,8 @@ def start_session(user_id, game):
         current_recorder = SessionRecorder(user_id, game)
         running = True
 
-        # Start serial in background thread
-        stream_thread = threading.Thread(
-            target=stream_eeg,
-            args=(_callback,),
-            daemon=True
-        )
-
-        stream_thread.start()
+        # Use serial_reader lifecycle manager
+        start_stream(_callback)
 
         return {
             "sessionId": current_recorder.session_id,
@@ -49,24 +43,20 @@ def start_session(user_id, game):
 
 
 def stop_session():
+
     global current_recorder, running
 
     if current_recorder is None:
         return {"status": "no active session"}
 
-    with lock:
-        if not running:
-            return {"error": "No active session"}
+    stop_stream()   # <-- ADD THIS
 
-        sid = current_recorder.close()
+    sid = current_recorder.close()
 
-        running = False
-        current_recorder = None
+    current_recorder = None
+    running = False
 
-        return {
-            "sessionId": sid,
-            "status": "stopped"
-        }
+    return {"sessionId": sid}
 
 
 def get_live():

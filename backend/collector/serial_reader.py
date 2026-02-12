@@ -1,43 +1,73 @@
 import serial
-import time
+import threading
 
 PORT = "COM5"
 BAUD = 115200
 
+running = False
+thread = None
+
+
 def stream_eeg(callback):
+
+    global running
 
     ser = serial.Serial(PORT, BAUD, timeout=1)
 
-    # Arduino resets when port opens
-    time.sleep(2)
-
     print("Connected to COM5 — listening for EEG stream...")
 
-    while True:
-        try:
-            line = ser.readline().decode(errors="ignore").strip()
+    try:
+        while running:
+            line = ser.readline()
 
             if not line:
                 continue
 
-            # Ignore marker if it appears
-            if "START_SESSION" in line:
-                print("Marker detected – starting capture")
+            try:
+                line = line.decode().strip()
+
+                if "," not in line:
+                    continue
+
+                ts, val = line.split(",")
+
+                callback({
+                    "timestamp": int(ts),
+                    "value": float(val)
+                })
+
+            except:
                 continue
 
-            # REAL DATA lines contain comma
-            if "," not in line:
-                continue
+    finally:
+        print("Closing serial...")
+        ser.close()
+        print("Serial closed.")
 
-            ts, val = line.split(",")
 
-            callback({
-                "timestamp": int(ts),
-                "value": float(val)
-            })
+def start_stream(callback):
 
-        except Exception as e:
-            print("Parse error:", e)
+    global running, thread
 
-        finally:
-            ser.close()
+    running = True
+
+    thread = threading.Thread(
+        target=stream_eeg,
+        args=(callback,),
+        daemon=False   # IMPORTANT
+    )
+
+    thread.start()
+
+
+def stop_stream():
+
+    global running, thread
+
+    running = False
+
+    if thread:
+        thread.join()
+        thread = None
+
+    print("Stream stopped cleanly.")
