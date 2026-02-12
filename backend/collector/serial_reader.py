@@ -38,3 +38,6 @@ def stream_eeg(callback):
 
         except Exception as e:
             print("Parse error:", e)
+
+        finally:
+            ser.close()

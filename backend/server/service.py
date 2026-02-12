@@ -51,6 +51,9 @@ def start_session(user_id, game):
 def stop_session():
     global current_recorder, running
 
+    if current_recorder is None:
+        return {"status": "no active session"}
+
     with lock:
         if not running:
             return {"error": "No active session"}

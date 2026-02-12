@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from ai.models.inference import predict_from_device_features
+from ai.models.hybrid_inference import hybrid_predict
 from server.service import (
     start_session,
     stop_session,
@@ -14,14 +15,14 @@ api = Blueprint("api", __name__)
 def interpret():
 
     feats = request.json
+    childId = feats.get("childId", "unknown")
+    session_count = sessions.count_documents({"userId": childId})
 
     # ----- AI PREDICTION -----
     try:
-        score = predict_from_device_features(feats)
+        score = hybrid_predict(childId, feats, session_count)
     except Exception as e:
         print("AI error:", e)
-
-        # fallback to old heuristic if model fails
         score = feats.get("attention_index", 0)
 
 

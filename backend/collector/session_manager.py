@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-
+from ai.models.subject_trainer import train_subject_model
 from processing.preprocessor import EEGBuffer
 from processing.features import extract_features
 from server.db import sessions
@@ -90,14 +90,35 @@ class SessionRecorder:
                 "windows": len(scores)
             }
 
+        # ---- Save features for subject adaptation ----
         sessions.update_one(
             {"sessionId": self.session_id},
             {"$set": {
+                "training_data": [
+                    {
+                        "theta_beta_ratio": f["theta_beta_ratio"],
+                        "entropy": f["entropy"],
+                        "engagement": f["engagement"],
+                        "variability": f["variability"],
+                        "label": f["attention_index"] / 100.0
+                    }
+                    for f in doc.get("features", [])
+                ],
+
                 "summary": summary,
                 "endTime": datetime.utcnow(),
                 "nsi": self.compute_nsi()
             }}
         )
+
+        count = sessions.count_documents({"userId": doc["userId"]})
+        print(f"[ADAPT] Child {doc['userId']} now has {count} sessions")
+
+        if count >= 3:
+            print("[ADAPT] Threshold reached → training subject model")
+            train_subject_model(doc["userId"])
+        else:
+            print("[ADAPT] Waiting for more sessions (need 3)")
 
         return self.session_id
     

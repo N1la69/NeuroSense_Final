@@ -1,0 +1,49 @@
+import joblib
+import numpy as np
+from ai.models.inference import predict_from_device_features
+
+
+def load_subject(childId):
+
+    path = f"ai/artifacts/subject_{childId}.pkl"
+
+    try:
+        return joblib.load(path)
+    except:
+        return None
+
+
+def hybrid_predict(childId, feats, session_count):
+
+    print(f"[HYBRID] Sessions for child: {session_count}")
+
+    loso = predict_from_device_features(feats)
+
+    if session_count < 3:
+        print("[HYBRID] Using LOSO only")
+        return loso
+
+    subj = load_subject(childId)
+
+    if not subj:
+        print("[HYBRID] No subject model found → fallback LOSO")
+        return loso
+
+    x = np.array([[
+        feats["theta_beta_ratio"],
+        feats["entropy"],
+        feats["engagement"],
+        feats["variability"],
+        0.0
+    ]])
+
+    p = subj.predict(x)[0] * 100  # regression output
+
+    # keep values sane
+    p = max(0, min(100, p))
+
+    alpha = min(0.2 * (session_count - 2), 0.7)
+
+    print(f"[HYBRID] α={alpha:.2f} | subject={p:.1f} | loso={loso:.1f}")
+
+    return float(alpha * p + (1 - alpha) * loso)
