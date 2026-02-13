@@ -131,34 +131,74 @@ class SessionRecorder:
 
         if len(feats) < 5:
             return None, None
+        
+        total_windows = len(feats)
 
-        mc = [f["model_confidence"] for f in feats]
-        bs = [f["biomarker_score"] for f in feats]
-        sq = [f["signal_quality"] for f in feats]
+        clean = [
+            f for f in feats
+            if f.get("signal_quality", 0) >= 0.6
+            and f.get("model_confidence", 0) >= 2
+        ]
 
-        mc_mean = sum(mc) / len(mc)
+        clean_count = len(clean)
+
+        if clean_count == 0:
+            return 0.0, {
+                "error": "NO_VALID_WINDOWS",
+                "windows": total_windows
+            }
+
+        reliability_ratio = clean_count / total_windows
+
+        if reliability_ratio < 0.3:
+            return 0.0, {
+                "error": "LOW_SIGNAL_RELIABILITY",
+                "windows": total_windows,
+                "valid_windows": clean_count,
+                "reliability_ratio": round(reliability_ratio, 2)
+            }
+
+        raw_mc = [f["model_confidence"] for f in clean]
+        bs = [f["biomarker_score"] for f in clean]
+        sq = [f["signal_quality"] for f in clean]
+
+        raw_mean = sum(raw_mc) / len(raw_mc)
+
+        min_c = min(raw_mc)
+        max_c = max(raw_mc)
+
+        calibrated_mc = [
+            (c - min_c) / (max_c - min_c + 1e-6) * 100
+            for c in raw_mc
+        ]
+
+        cal_mean = sum(calibrated_mc) / len(calibrated_mc)
+
         bs_mean = (sum(bs) / len(bs)) * 100
         sqi_mean = (sum(sq) / len(sq)) * 100
 
-        std = (sum((x - mc_mean) ** 2 for x in mc) / len(mc)) ** 0.5
-        cv = std / (mc_mean + 1e-6)
+        std_raw = (sum((x - raw_mean) ** 2 for x in raw_mc) / len(raw_mc)) ** 0.5
+        cv = std_raw / (raw_mean + 1e-6)
 
         stability_score = max(0, min(100, 100 * (1 - cv)))
 
         nsi = (
-            0.45 * mc_mean +
+            0.45 * cal_mean +
             0.25 * bs_mean +
             0.15 * stability_score +
             0.15 * sqi_mean
         )
 
         summary = {
-            "model_confidence_mean": round(mc_mean, 2),
+            "raw_model_confidence_mean": round(raw_mean, 2),
+            "calibrated_confidence_mean": round(cal_mean, 2),
             "biomarker_score_mean": round(bs_mean, 2),
             "stability_score": round(stability_score, 2),
             "signal_quality_mean": round(sqi_mean, 2),
-            "windows": len(mc)
-        }   
+            "windows_total": total_windows,
+            "windows_used": clean_count,
+            "reliability_ratio": round(reliability_ratio, 2)
+        }
 
         return round(max(0, min(100, nsi)), 2), summary
 
