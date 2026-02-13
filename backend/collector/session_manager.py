@@ -134,9 +134,11 @@ class SessionRecorder:
 
         mc = [f["model_confidence"] for f in feats]
         bs = [f["biomarker_score"] for f in feats]
+        sq = [f["signal_quality"] for f in feats]
 
         mc_mean = sum(mc) / len(mc)
         bs_mean = (sum(bs) / len(bs)) * 100
+        sqi_mean = (sum(sq) / len(sq)) * 100
 
         std = (sum((x - mc_mean) ** 2 for x in mc) / len(mc)) ** 0.5
         cv = std / (mc_mean + 1e-6)
@@ -144,15 +146,17 @@ class SessionRecorder:
         stability_score = max(0, min(100, 100 * (1 - cv)))
 
         nsi = (
-            0.5 * mc_mean +
-            0.3 * bs_mean +
-            0.2 * stability_score
+            0.45 * mc_mean +
+            0.25 * bs_mean +
+            0.15 * stability_score +
+            0.15 * sqi_mean
         )
 
         summary = {
             "model_confidence_mean": round(mc_mean, 2),
             "biomarker_score_mean": round(bs_mean, 2),
             "stability_score": round(stability_score, 2),
+            "signal_quality_mean": round(sqi_mean, 2),
             "windows": len(mc)
         }   
 
