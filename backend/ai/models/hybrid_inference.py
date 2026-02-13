@@ -19,15 +19,26 @@ def hybrid_predict(childId, feats, session_count):
 
     loso = predict_from_device_features(feats)
 
+    # ---------- LOSO ONLY ----------
     if session_count < 3:
         print("[HYBRID] Using LOSO only")
-        return loso
+        return {
+            "hybrid_score": float(loso),
+            "loso_score": float(loso),
+            "subject_score": None,
+            "alpha": 0.0
+        }
 
     subj = load_subject(childId)
 
     if not subj:
         print("[HYBRID] No subject model found → fallback LOSO")
-        return loso
+        return {
+            "hybrid_score": float(loso),
+            "loso_score": float(loso),
+            "subject_score": None,
+            "alpha": 0.0
+        }
 
     x = np.array([[
         feats["theta_beta_ratio"],
@@ -37,13 +48,17 @@ def hybrid_predict(childId, feats, session_count):
         0.0
     ]])
 
-    p = subj.predict(x)[0] * 100  # regression output
-
-    # keep values sane
+    p = subj.predict(x)[0] * 100 
     p = max(0, min(100, p))
 
     alpha = min(0.2 * (session_count - 2), 0.7)
+    hybrid = alpha * p + (1 - alpha) * loso
 
     print(f"[HYBRID] α={alpha:.2f} | subject={p:.1f} | loso={loso:.1f}")
 
-    return float(alpha * p + (1 - alpha) * loso)
+    return {
+        "hybrid_score": float(hybrid),
+        "loso_score": float(loso),
+        "subject_score": float(p),
+        "alpha": float(alpha)
+    }

@@ -28,7 +28,6 @@ def extract_features(sig):
 
         "variability": float(np.std(sig)),
 
-        "attention_index": float(
-            (1 / (1 + tbr)) * 100
-        )
+        "biomarker_score": float(1 / (1 + tbr))
+
     }

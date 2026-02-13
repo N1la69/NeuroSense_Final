@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from ai.models.subject_trainer import train_subject_model
+from ai.models.hybrid_inference import hybrid_predict
 from processing.preprocessor import EEGBuffer
 from processing.features import extract_features
 from server.db import sessions
@@ -45,6 +46,20 @@ class SessionRecorder:
             feats = extract_features(sig)
 
             feats["timestamp"] = sample["timestamp"]
+
+            session_count = sessions.count_documents(
+                {"userId": self.user_id}
+            )
+
+            pred = hybrid_predict(
+                self.user_id,
+                feats,
+                session_count
+            )
+
+            feats["model_confidence"] = pred["hybrid_score"]
+            feats["alpha"] = pred["alpha"]
+
             self.feature_cache.append(feats)
 
             if len(self.feature_cache) >= 5:
@@ -74,21 +89,8 @@ class SessionRecorder:
         self.flush()
 
         doc = sessions.find_one({"sessionId": self.session_id})
-
-        scores = [
-            f["attention_index"]
-            for f in doc.get("features", [])
-        ]
-
-        summary = {}
-
-        if scores:
-            summary = {
-                "mean_attention": sum(scores) / len(scores),
-                "max_attention": max(scores),
-                "min_attention": min(scores),
-                "windows": len(scores)
-            }
+        
+        nsi, summary = self.compute_nsi()
 
         # ---- Save features for subject adaptation ----
         sessions.update_one(
@@ -100,14 +102,13 @@ class SessionRecorder:
                         "entropy": f["entropy"],
                         "engagement": f["engagement"],
                         "variability": f["variability"],
-                        "label": f["attention_index"] / 100.0
+                        "label": f["model_confidence"] / 100.0
                     }
                     for f in doc.get("features", [])
                 ],
-
                 "summary": summary,
                 "endTime": datetime.utcnow(),
-                "nsi": self.compute_nsi()
+                "nsi": nsi
             }}
         )
 
@@ -128,23 +129,33 @@ class SessionRecorder:
         doc = sessions.find_one({"sessionId": self.session_id})
         feats = doc.get("features", [])
 
-        # Not enough windows for stability judgement
         if len(feats) < 5:
-            return "INSUFFICIENT"
+            return None, None
 
-        scores = [f["attention_index"] for f in feats]
+        mc = [f["model_confidence"] for f in feats]
+        bs = [f["biomarker_score"] for f in feats]
 
-        mean = sum(scores) / len(scores)
+        mc_mean = sum(mc) / len(mc)
+        bs_mean = (sum(bs) / len(bs)) * 100
 
-        std = (sum((s - mean) ** 2 for s in scores) / len(scores)) ** 0.5
+        std = (sum((x - mc_mean) ** 2 for x in mc) / len(mc)) ** 0.5
+        cv = std / (mc_mean + 1e-6)
 
-        cv = std / (mean + 1e-6)   # coefficient of variation
+        stability_score = max(0, min(100, 100 * (1 - cv)))
 
-        if cv < 0.15:
-            return "STABLE"
+        nsi = (
+            0.5 * mc_mean +
+            0.3 * bs_mean +
+            0.2 * stability_score
+        )
 
-        if cv < 0.30:
-            return "MODERATE"
+        summary = {
+            "model_confidence_mean": round(mc_mean, 2),
+            "biomarker_score_mean": round(bs_mean, 2),
+            "stability_score": round(stability_score, 2),
+            "windows": len(mc)
+        }   
 
-        return "FLUCTUATING"
+        return round(max(0, min(100, nsi)), 2), summary
+
 
