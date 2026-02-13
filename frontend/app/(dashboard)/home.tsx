@@ -13,7 +13,9 @@ export default function HomeScreen() {
 
   const [scores, setScores] = useState<number[]>([]);
   const [sessions, setSessions] = useState<string[]>([]);
-  const [nsi, setNsi] = useState<string | null>(null);
+  const [nsi, setNsi] = useState<number | null>(null);
+  const [summary, setSummary] = useState<any>(null);
+  const [totalSessions, setTotalSessions] = useState<number>(0);
   const [recommendation, setRecommendation] = useState<any>(null);
 
   function interpretOverallProgress(scores: number[]) {
@@ -38,14 +40,27 @@ export default function HomeScreen() {
     return { label: "Needs Practice", color: "#d32f2f" };
   }
 
-  function interpretNSI(label: string) {
-    if (label === "STABLE")
-      return { label: "Stable Neural Response", color: "#2e7d32" };
+  function interpretNSIScore(score: number) {
+    if (score >= 75)
+      return {
+        label: "Very Stable Neural Response",
+        color: "#2e7d32",
+        explanation:
+          "Neural attention patterns are consistent and well regulated.",
+      };
 
-    if (label === "MODERATE")
-      return { label: "Developing Regulation", color: "#ed6c02" };
+    if (score >= 60)
+      return {
+        label: "Moderately Stable",
+        color: "#ed6c02",
+        explanation: "Developing regulation with some variability.",
+      };
 
-    return { label: "High Variability", color: "#d32f2f" };
+    return {
+      label: "High Variability",
+      color: "#d32f2f",
+      explanation: "Attention patterns show significant fluctuation.",
+    };
   }
 
   useEffect(() => {
@@ -56,26 +71,68 @@ export default function HomeScreen() {
 
       setScores(dash.scores || []);
       setSessions(dash.sessions || []);
-      setNsi(dash.nsi);
+      setNsi(dash.latest_nsi ?? null);
+      setSummary(dash.latest_summary ?? null);
+      setTotalSessions(dash.total_sessions ?? 0);
 
-      // Use latest live interpreted as recommendation source
       const rec = await getLiveInterpreted();
       setRecommendation(rec);
+
+      console.log("Scores: ", scores);
+      console.log("Summary: ", summary);
     }
 
     load().catch(console.error);
   }, []);
 
-  if (!scores.length) {
-    return (
-      <View style={{ padding: 20 }}>
-        <Text>Loading progress…</Text>
-      </View>
-    );
-  }
-
   const insight = interpretOverallProgress(scores);
   const latest = latestLabel(scores[scores.length - 1]);
+
+  if (totalSessions === 0) {
+    return (
+      <AppShell>
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <Text style={{ fontSize: 24, fontWeight: "700" }}>
+            Welcome to NeuroSense 👋
+          </Text>
+
+          <View
+            style={{
+              marginTop: 16,
+              padding: 16,
+              borderRadius: 12,
+              backgroundColor: "#f5f7ff",
+            }}
+          >
+            <Text style={{ fontWeight: "600" }}>
+              NeuroSense uses AI-powered neural analysis to monitor your child's
+              attention patterns.
+            </Text>
+
+            <Text style={{ marginTop: 10 }}>
+              Start your first session to establish a neural baseline.
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => router.push("/start" as any)}
+            style={{
+              marginTop: 24,
+              backgroundColor: "#4f7cff",
+              padding: 16,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              style={{ color: "white", textAlign: "center", fontWeight: "700" }}
+            >
+              Start First Session
+            </Text>
+          </Pressable>
+        </ScrollView>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -138,7 +195,7 @@ export default function HomeScreen() {
         </View>
 
         {/* NSI */}
-        {nsi && (
+        {nsi !== null && summary && (
           <View
             style={{
               marginTop: 24,
@@ -147,27 +204,67 @@ export default function HomeScreen() {
               backgroundColor: "#eef2ff",
             }}
           >
-            <Text style={{ fontWeight: "700" }}>
-              Neural Response Stability Index
-            </Text>
+            <Text style={{ fontWeight: "700" }}>Neural Stability Index</Text>
 
             {(() => {
-              const info = interpretNSI(nsi);
+              const info = interpretNSIScore(nsi);
               return (
                 <>
                   <Text
                     style={{
                       marginTop: 8,
-                      fontSize: 24,
+                      fontSize: 34,
                       fontWeight: "800",
                       color: info.color,
                     }}
                   >
+                    {nsi.toFixed(1)} / 100
+                  </Text>
+
+                  <Text style={{ fontWeight: "700", color: info.color }}>
                     {info.label}
                   </Text>
+
+                  <Text style={{ marginTop: 6 }}>{info.explanation}</Text>
                 </>
               );
             })()}
+          </View>
+        )}
+
+        {/* SUMMARY BREAKDOWN */}
+        {summary && (
+          <View
+            style={{
+              marginTop: 16,
+              padding: 16,
+              borderRadius: 12,
+              backgroundColor: "#f5f7ff",
+            }}
+          >
+            <Text style={{ fontWeight: "700" }}>Session Breakdown</Text>
+
+            <Text style={{ marginTop: 8 }}>
+              AI Confidence: {summary.calibrated_confidence_mean.toFixed(1)}%
+            </Text>
+
+            <Text>
+              Biomarker Strength: {summary.biomarker_score_mean.toFixed(1)}%
+            </Text>
+
+            <Text>Stability Score: {summary.stability_score.toFixed(1)}%</Text>
+
+            <Text>
+              Signal Quality: {summary.signal_quality_mean.toFixed(1)}%
+            </Text>
+
+            <Text style={{ marginTop: 8, fontWeight: "600" }}>
+              Reliability Ratio: {summary.reliability_ratio}
+            </Text>
+
+            <Text>
+              Windows Used: {summary.windows_used} / {summary.windows_total}
+            </Text>
           </View>
         )}
 
@@ -218,6 +315,23 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         ))}
+
+        {/* SESSION BUTTONS */}
+        <Pressable
+          onPress={() => router.push("/start" as any)}
+          style={{
+            marginTop: 28,
+            backgroundColor: "#4f7cff",
+            padding: 16,
+            borderRadius: 12,
+          }}
+        >
+          <Text
+            style={{ color: "white", textAlign: "center", fontWeight: "700" }}
+          >
+            Start New Session
+          </Text>
+        </Pressable>
       </ScrollView>
     </AppShell>
   );
