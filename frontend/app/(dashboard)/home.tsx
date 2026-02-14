@@ -1,14 +1,18 @@
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import {
+  interpretNSIScore,
+  interpretOverallProgress,
+  latestLabel,
+} from "@/utils/helpers";
+import AppShell from "@/components/ui/AppShell";
+import { getChild } from "@/utils/storage";
+import { getDashboard, getLiveInterpreted } from "@/utils/api";
+import ProgressTrend from "@/components/ProgressTrend";
+import TopBar from "@/components/ui/TopBar";
 
-import AppShell from "../../components/AppShell";
-import ProgressTrend from "../../components/ProgressTrend";
-
-import { getDashboard, getLiveInterpreted } from "../../utils/api";
-import { getChild } from "../../utils/storage";
-
-export default function HomeScreen() {
+const HomeScreen = () => {
   const router = useRouter();
 
   const [scores, setScores] = useState<number[]>([]);
@@ -18,70 +22,22 @@ export default function HomeScreen() {
   const [totalSessions, setTotalSessions] = useState<number>(0);
   const [recommendation, setRecommendation] = useState<any>(null);
 
-  function interpretOverallProgress(scores: number[]) {
-    const first = Math.round(scores[0] * 100);
-    const last = Math.round(scores[scores.length - 1] * 100);
+  const load = async () => {
+    const childId = await getChild();
 
-    if (scores.length < 2)
-      return `Training has just started. Current focus level is ${last}%.`;
+    const dash = await getDashboard(childId!);
 
-    if (last - first > 5)
-      return `Positive improvement observed: Focus increased from ${first}% to ${last}%.`;
+    setScores(dash.scores || []);
+    setSessions(dash.sessions || []);
+    setNsi(dash.latest_nsi ?? null);
+    setSummary(dash.latest_summary ?? null);
+    setTotalSessions(dash.total_sessions ?? 0);
 
-    if (last - first < -5)
-      return `Some variation seen: Focus changed from ${first}% to ${last}%. This is normal during therapy.`;
-
-    return `Focus level has remained stable around ${last}%.`;
-  }
-
-  function latestLabel(score: number) {
-    if (score >= 0.7) return { label: "Strong Focus", color: "#2e7d32" };
-    if (score >= 0.55) return { label: "Improving", color: "#ed6c02" };
-    return { label: "Needs Practice", color: "#d32f2f" };
-  }
-
-  function interpretNSIScore(score: number) {
-    if (score >= 75)
-      return {
-        label: "Very Stable Neural Response",
-        color: "#2e7d32",
-        explanation:
-          "Neural attention patterns are consistent and well regulated.",
-      };
-
-    if (score >= 60)
-      return {
-        label: "Moderately Stable",
-        color: "#ed6c02",
-        explanation: "Developing regulation with some variability.",
-      };
-
-    return {
-      label: "High Variability",
-      color: "#d32f2f",
-      explanation: "Attention patterns show significant fluctuation.",
-    };
-  }
+    const rec = await getLiveInterpreted();
+    setRecommendation(rec);
+  };
 
   useEffect(() => {
-    async function load() {
-      const childId = await getChild();
-
-      const dash = await getDashboard(childId!);
-
-      setScores(dash.scores || []);
-      setSessions(dash.sessions || []);
-      setNsi(dash.latest_nsi ?? null);
-      setSummary(dash.latest_summary ?? null);
-      setTotalSessions(dash.total_sessions ?? 0);
-
-      const rec = await getLiveInterpreted();
-      setRecommendation(rec);
-
-      console.log("Scores: ", scores);
-      console.log("Summary: ", summary);
-    }
-
     load().catch(console.error);
   }, []);
 
@@ -136,6 +92,7 @@ export default function HomeScreen() {
 
   return (
     <AppShell>
+      <TopBar />
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         <Text style={{ fontSize: 22, fontWeight: "700" }}>
           Your Child's Therapy Progress
@@ -335,4 +292,6 @@ export default function HomeScreen() {
       </ScrollView>
     </AppShell>
   );
-}
+};
+
+export default HomeScreen;

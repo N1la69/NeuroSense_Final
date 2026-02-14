@@ -2,8 +2,8 @@ import { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { signup } from "@/utils/api";
-import Input from "@/components/Input";
-import Button from "@/components/Button";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 import { saveParent } from "@/utils/storage";
 
 const Signup = () => {

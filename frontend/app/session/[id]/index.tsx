@@ -1,4 +1,4 @@
-import AppShell from "@/components/AppShell";
+import AppShell from "@/components/ui/AppShell";
 import SessionTrend from "@/components/SessionTrend";
 import { getSessionDetail } from "@/utils/api";
 import { useLocalSearchParams } from "expo-router";

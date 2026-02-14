@@ -8,13 +8,12 @@ export default function Layout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: "#4f7cff",
         tabBarInactiveTintColor: "#888",
-        headerTitleAlign: "center",
-
         tabBarStyle: {
-          paddingBottom: insets.bottom + 6, // ← MAGIC LINE
-          height: 50 + insets.bottom, // ← adapts to device
+          paddingBottom: insets.bottom + 6,
+          height: 50 + insets.bottom,
         },
       }}
     >

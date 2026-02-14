@@ -10,8 +10,8 @@ import {
 import { useRouter } from "expo-router";
 import { getParent, saveChild } from "@/utils/storage";
 import { addChild } from "@/utils/api";
-import Input from "@/components/Input";
-import Button from "@/components/Button";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 const ChildOnboard = () => {
   const router = useRouter();
