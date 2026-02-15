@@ -23,10 +23,18 @@ const HomeScreen = () => {
 
   const [scores, setScores] = useState<number[]>([]);
   const [sessions, setSessions] = useState<string[]>([]);
-  const [nsi, setNsi] = useState<number | null>(null);
-  const [summary, setSummary] = useState<any>(null);
+  // const [nsi, setNsi] = useState<number | null>(null);
+  // const [summary, setSummary] = useState<any>(null);
   const [totalSessions, setTotalSessions] = useState<number>(0);
   const [recommendation, setRecommendation] = useState<any>(null);
+
+  const [latestSession, setLatestSession] = useState<{
+    nsi: number | null;
+    normalized_nsi: number | null;
+    baseline_nsi: number | null;
+    delta_from_baseline: number | null;
+    summary: any;
+  } | null>(null);
 
   const load = async () => {
     const childId = await getChild();
@@ -35,8 +43,15 @@ const HomeScreen = () => {
 
     setScores(dash.scores || []);
     setSessions(dash.sessions || []);
-    setNsi(dash.latest_nsi ?? null);
-    setSummary(dash.latest_summary ?? null);
+    // setNsi(dash.latest_nsi ?? null);
+    // setSummary(dash.latest_summary ?? null);
+    setLatestSession({
+      nsi: dash.latest_nsi ?? null,
+      normalized_nsi: dash.latest_normalized_nsi ?? null,
+      baseline_nsi: dash.latest_baseline_nsi ?? null,
+      delta_from_baseline: dash.latest_delta_from_baseline ?? null,
+      summary: dash.latest_summary ?? null,
+    });
     setTotalSessions(dash.total_sessions ?? 0);
 
     const rec = await getLiveInterpreted();
@@ -123,10 +138,20 @@ const HomeScreen = () => {
         <LatestSessionCard latest={latest} scores={scores} />
 
         {/* Neural Stability Index */}
-        {nsi !== null && summary && <NsiCard nsi={nsi} summary={summary} />}
+        {latestSession?.nsi !== null && latestSession?.summary && (
+          <NsiCard
+            nsi={latestSession.nsi}
+            normalized_nsi={latestSession.normalized_nsi}
+            baseline_nsi={latestSession.baseline_nsi}
+            delta_from_baseline={latestSession.delta_from_baseline}
+            summary={latestSession.summary}
+          />
+        )}
 
         {/* Neural Analysis Breakdown */}
-        {summary && <NeuralAnalysisCard summary={summary} />}
+        {latestSession?.summary && (
+          <NeuralAnalysisCard summary={latestSession.summary} />
+        )}
 
         {/* Recommendation */}
         {recommendation && recommendation.next_games && (

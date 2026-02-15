@@ -92,6 +92,28 @@ class SessionRecorder:
         
         nsi, summary = self.compute_nsi()
 
+        previous_sessions = list(
+            sessions.find(
+                {"userId": doc["userId"], "sessionId": {"$ne": self.session_id}, "nsi": {"$ne": None}}
+            ).sort("startTime", 1)
+        )
+
+        baseline_nsi = None
+        normalized_nsi = None
+        delta_from_baseline = None
+
+        if len(previous_sessions) >= 3:
+
+            first_three = previous_sessions[:3]
+            baseline_nsi = sum(s["nsi"] for s in first_three) / 3
+
+            delta_from_baseline = nsi - baseline_nsi
+
+            normalized_nsi = 50 + delta_from_baseline
+
+            # clamp
+            normalized_nsi = max(0, min(100, normalized_nsi))
+
         # ---- Save features for subject adaptation ----
         sessions.update_one(
             {"sessionId": self.session_id},
@@ -108,7 +130,10 @@ class SessionRecorder:
                 ],
                 "summary": summary,
                 "endTime": datetime.utcnow(),
-                "nsi": nsi
+                "nsi": nsi,
+                "baseline_nsi": baseline_nsi,
+                "normalized_nsi": normalized_nsi,
+                "delta_from_baseline": delta_from_baseline,
             }}
         )
 
