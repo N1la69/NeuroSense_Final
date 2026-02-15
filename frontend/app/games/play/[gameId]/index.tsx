@@ -1,10 +1,12 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
-import FocusBalloonGame from "@/games/focus-baloon/FocusBalloonGame";
+import FocusBalloonGame from "@/games/focus-balloon/FocusBalloonGame";
+import ThemeManager from "@/games/engine/ThemeManager";
 
 export default function GameScreen() {
   const router = useRouter();
 
-  const { gameId } = useLocalSearchParams();
+  const { gameId, theme } = useLocalSearchParams();
+  ThemeManager.setTheme(theme === "fun" ? "fun" : "calm");
 
   function handleEnd() {
     router.replace("/(dashboard)/home");

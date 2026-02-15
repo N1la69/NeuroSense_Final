@@ -93,19 +93,15 @@ const HomeScreen = () => {
 
           {/* GAME BUTTONS */}
           <Pressable
-            onPress={() => router.push("/games/play/focus-balloon" as any)}
-            style={{
-              marginTop: 16,
-              backgroundColor: "#22c55e",
-              padding: 16,
-              borderRadius: 12,
-            }}
+            onPress={() => router.push("/games/play/focus-balloon?theme=calm")}
           >
-            <Text
-              style={{ color: "white", textAlign: "center", fontWeight: "700" }}
-            >
-              Play Focus Balloon Game
-            </Text>
+            <Text>Calm Therapy Mode (Focus Balloo)</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push("/games/play/focus-balloon?theme=fun")}
+          >
+            <Text>Fun Cartoon Mode (Focus Balloo)</Text>
           </Pressable>
         </ScrollView>
       </AppShell>
@@ -178,20 +174,17 @@ const HomeScreen = () => {
         <SessionReports sessions={sessions} scores={scores} />
 
         {/* GAME BUTTONS */}
+        {/* GAME BUTTONS */}
         <Pressable
-          onPress={() => router.push("/games/play/focus-balloon" as any)}
-          style={{
-            marginTop: 16,
-            backgroundColor: "#22c55e",
-            padding: 16,
-            borderRadius: 12,
-          }}
+          onPress={() => router.push("/games/play/focus-balloon?theme=calm")}
         >
-          <Text
-            style={{ color: "white", textAlign: "center", fontWeight: "700" }}
-          >
-            Play Focus Balloon Game
-          </Text>
+          <Text>Calm Therapy Mode (Focus Balloon)</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/games/play/focus-balloon?theme=fun")}
+        >
+          <Text>Fun Cartoon Mode (Focus Balloon)</Text>
         </Pressable>
       </ScrollView>
     </AppShell>
