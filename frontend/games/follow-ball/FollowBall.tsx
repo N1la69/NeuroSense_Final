@@ -1,6 +1,9 @@
 import { View } from "react-native";
+import ThemeManager from "../engine/ThemeManager";
 
 export default function FollowBall({ x, y, size, color }: any) {
+  const theme = ThemeManager.getTheme();
+
   return (
     <View
       style={{
@@ -12,8 +15,8 @@ export default function FollowBall({ x, y, size, color }: any) {
         borderRadius: size / 2,
         backgroundColor: color,
         shadowColor: color,
-        shadowOpacity: 0.7,
-        shadowRadius: 20,
+        shadowOpacity: 0.8,
+        shadowRadius: theme.glow,
       }}
     />
   );

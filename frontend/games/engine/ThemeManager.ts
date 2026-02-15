@@ -4,8 +4,8 @@ import { FunTheme } from "../themes/fun";
 class ThemeManager {
   private theme = CalmTheme;
 
-  setTheme(mode: "calm" | "fun") {
-    if (mode === "fun") this.theme = FunTheme;
+  setTheme(id: string) {
+    if (id === "fun") this.theme = FunTheme;
     else this.theme = CalmTheme;
   }
 

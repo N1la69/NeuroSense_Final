@@ -1,16 +1,14 @@
 export const FunTheme = {
-  backgroundTop: "#6366f1",
+  id: "fun",
+
+  backgroundTop: "#4338ca",
   backgroundBottom: "#ec4899",
 
-  balloonColors: {
-    low: "#ef4444",
-    medium: "#f59e0b",
-    high: "#22c55e",
-  },
+  ballColors: ["#ff4d6d", "#f59e0b", "#22c55e", "#3b82f6"],
 
-  particles: true,
+  glow: 40,
 
-  cloudSpeed: 1.2,
+  speedMultiplier: 1.3,
 
-  name: "fun",
+  starColor: "#facc15",
 };

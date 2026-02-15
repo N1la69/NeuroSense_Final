@@ -3,6 +3,9 @@ import { View, Text, Dimensions } from "react-native";
 import GameSessionManager from "@/games/engine/GameSessionManager";
 import FollowBall from "./FollowBall";
 import AttentionMeter from "@/games/components/AttentionMeter";
+import RewardStar from "./RewardStar";
+import ThemeManager from "../engine/ThemeManager";
+import GameBackground from "./GameBackground";
 
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
@@ -12,9 +15,11 @@ const SESSION_DURATION = 60000;
 export default function FollowBallGame({ onEnd }: any) {
   const [attention, setAttention] = useState(50);
   const attentionRef = useRef(50);
+  const sustainedRef = useRef(0);
 
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
+  const [stars, setStars] = useState<any[]>([]);
 
   const [ball, setBall] = useState({
     x: WIDTH / 2,
@@ -76,8 +81,24 @@ export default function FollowBallGame({ onEnd }: any) {
   function startPhysics() {
     function loop() {
       const att = attentionRef.current;
+      const theme = ThemeManager.getTheme();
 
-      const speedMultiplier = 0.5 + att / 100;
+      if (att > 65) sustainedRef.current += 1;
+      else sustainedRef.current = 0;
+
+      if (sustainedRef.current === 120) {
+        setStars((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            x: ball.x,
+            y: ball.y,
+          },
+        ]);
+      }
+
+      const difficulty = (0.6 + att / 80) * theme.speedMultiplier;
+      const speedMultiplier = difficulty;
 
       setBall((prev) => {
         let nx = prev.x + prev.vx * speedMultiplier;
@@ -108,7 +129,8 @@ export default function FollowBallGame({ onEnd }: any) {
   }
 
   function changeColor() {
-    const colors = ["#4f7cff", "#22c55e", "#f59e0b", "#ef4444", "#a855f7"];
+    const theme = ThemeManager.getTheme();
+    const colors = theme.ballColors;
 
     setBall((prev) => ({
       ...prev,
@@ -118,6 +140,8 @@ export default function FollowBallGame({ onEnd }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#eef2ff" }}>
+      <GameBackground />
+
       <Text
         style={{
           position: "absolute",
@@ -143,6 +167,10 @@ export default function FollowBallGame({ onEnd }: any) {
       </Text>
 
       <AttentionMeter attention={attention} />
+
+      {stars.map((s) => (
+        <RewardStar key={s.id} x={s.x} y={s.y} />
+      ))}
 
       <FollowBall x={ball.x} y={ball.y} size={60} color={ball.color} />
     </View>

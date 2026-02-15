@@ -92,12 +92,16 @@ const HomeScreen = () => {
           </View>
 
           {/* GAME BUTTONS */}
-          <Pressable onPress={() => router.push("/games/play/follow-ball")}>
-            <Text>Calm Therapy Mode (Focus Balloo)</Text>
+          <Pressable
+            onPress={() => router.push("/games/play/follow-ball?theme=calm")}
+          >
+            <Text>Calm Therapy Mode (Follow the ball)</Text>
           </Pressable>
 
-          <Pressable onPress={() => router.push("/games/play/follow-ball")}>
-            <Text>Fun Cartoon Mode (Focus Balloo)</Text>
+          <Pressable
+            onPress={() => router.push("/games/play/follow-ball?theme=fun")}
+          >
+            <Text>Fun Engagement Mode (Follow the ball)</Text>
           </Pressable>
         </ScrollView>
       </AppShell>
@@ -170,13 +174,16 @@ const HomeScreen = () => {
         <SessionReports sessions={sessions} scores={scores} />
 
         {/* GAME BUTTONS */}
-        {/* GAME BUTTONS */}
-        <Pressable onPress={() => router.push("/games/play/follow-ball")}>
-          <Text>Calm Therapy Mode (Focus Balloon)</Text>
+        <Pressable
+          onPress={() => router.push("/games/play/follow-ball?theme=calm")}
+        >
+          <Text>Calm Therapy Mode (Follow the ball)</Text>
         </Pressable>
 
-        <Pressable onPress={() => router.push("/games/play/follow-ball")}>
-          <Text>Fun Cartoon Mode (Focus Balloon)</Text>
+        <Pressable
+          onPress={() => router.push("/games/play/follow-ball?theme=fun")}
+        >
+          <Text>Fun Engagement Mode (Follow the ball)</Text>
         </Pressable>
       </ScrollView>
     </AppShell>

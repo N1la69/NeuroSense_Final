@@ -1,16 +1,14 @@
 export const CalmTheme = {
+  id: "calm",
+
   backgroundTop: "#e0f2fe",
   backgroundBottom: "#f0f9ff",
 
-  balloonColors: {
-    low: "#94a3b8",
-    medium: "#60a5fa",
-    high: "#22c55e",
-  },
+  ballColors: ["#60a5fa", "#34d399", "#a78bfa"],
 
-  particles: false,
+  glow: 20,
 
-  cloudSpeed: 0.3,
+  speedMultiplier: 0.8,
 
-  name: "calm",
+  starColor: "#fde68a",
 };
