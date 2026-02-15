@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Dimensions } from "react-native";
-import GameSessionManager from "../engine/GameSessionManager";
-import { attentionToForce } from "../engine/NeuroAdapter";
+import { useEffect, useRef, useState } from "react";
+import { View, Dimensions } from "react-native";
+import GameSessionManager from "@/games/engine/GameSessionManager";
+import { attentionToLift } from "@/games/engine/NeuroAdapter";
+import Balloon from "./Balloon";
+import AttentionMeter from "@/games/components/AttentionMeter";
 
 const HEIGHT = Dimensions.get("window").height;
 
@@ -10,57 +12,71 @@ export default function FocusBalloonGame({ onEnd }: any) {
   const [y, setY] = useState(HEIGHT / 2);
 
   const velocity = useRef(0);
+  const animationRef = useRef<number | undefined>(undefined);
+  const attentionRef = useRef(0);
 
+  // Start session
   useEffect(() => {
-    GameSessionManager.start("Focus Balloon");
+    let pollInterval: any;
 
-    const poll = setInterval(async () => {
-      const att = await GameSessionManager.getAttention();
-      setAttention(att);
-    }, 500);
+    async function start() {
+      await GameSessionManager.start("Focus Balloon");
 
-    const physics = setInterval(() => {
-      const force = attentionToForce(attention);
+      // Poll attention every 500ms
+      pollInterval = setInterval(async () => {
+        const att = await GameSessionManager.getAttention();
+        attentionRef.current = att;
+        setAttention(att);
+      }, 500);
 
-      velocity.current += (force - 0.5) * 2;
-      velocity.current *= 0.95;
+      startPhysics();
+    }
+
+    start();
+
+    return () => {
+      clearInterval(pollInterval);
+
+      cancelAnimationFrame(animationRef.current!);
+
+      GameSessionManager.stop();
+
+      onEnd?.();
+    };
+  }, []);
+
+  function startPhysics() {
+    function loop() {
+      const lift = attentionToLift(attentionRef.current);
+
+      const gravity = 0.4;
+
+      velocity.current += lift * 0.8;
+      velocity.current -= gravity;
+
+      velocity.current *= 0.98;
 
       setY((prev) => {
-        let next = prev - velocity.current * 5;
+        let next = prev - velocity.current;
 
-        if (next < 50) next = 50;
-        if (next > HEIGHT - 150) next = HEIGHT - 150;
+        if (next < 80) next = 80;
+
+        if (next > HEIGHT - 120) next = HEIGHT - 120;
 
         return next;
       });
-    }, 16);
 
-    return () => {
-      clearInterval(poll);
-      clearInterval(physics);
-      GameSessionManager.stop();
-      onEnd?.();
-    };
-  }, [attention]);
+      animationRef.current = requestAnimationFrame(loop);
+    }
+
+    animationRef.current = requestAnimationFrame(loop);
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#eef2ff" }}>
-      <Text style={{ position: "absolute", top: 50, alignSelf: "center" }}>
-        Attention: {attention}
-      </Text>
+      <AttentionMeter attention={attention} />
 
-      <View
-        style={{
-          position: "absolute",
-          left: "50%",
-          marginLeft: -25,
-          top: y,
-          width: 50,
-          height: 70,
-          borderRadius: 25,
-          backgroundColor: "#ff4d6d",
-        }}
-      />
+      <Balloon y={y} />
     </View>
   );
 }

@@ -1,15 +1,18 @@
-import FocusBalloonGame from "@/games/focus-baloon/FocusBalloonGame";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import FocusBalloonGame from "@/games/focus-baloon/FocusBalloonGame";
 
-export default function PlayGameScreen() {
+export default function GameScreen() {
   const router = useRouter();
+
   const { gameId } = useLocalSearchParams();
 
-  const onEnd = () => {
+  function handleEnd() {
     router.replace("/(dashboard)/home");
-  };
+  }
 
-  if (gameId === "focus-balloon") return <FocusBalloonGame onEnd={onEnd} />;
+  if (gameId === "focus-balloon") {
+    return <FocusBalloonGame onEnd={handleEnd} />;
+  }
 
   return null;
 }

@@ -6,43 +6,68 @@ import {
 import { getChild } from "@/utils/storage";
 
 class GameSessionManager {
-  private sessionActive = false;
+  private active = false;
   private gameName = "";
 
+  private baseline = 0;
+  private initialized = false;
+
+  private smoothed = 0;
+
   async start(gameName: string) {
+    if (this.active) return;
+
     const childId = await getChild();
 
-    if (!childId) throw new Error("Child not selected");
+    if (!childId) {
+      throw new Error("No child selected");
+    }
 
     this.gameName = gameName;
 
-    const res = await startSessionForChild(childId, gameName);
-
-    this.sessionActive = true;
-
-    return res;
+    await startSessionForChild(childId, gameName);
+    this.active = true;
+    this.initialized = false;
+    this.smoothed = 0;
   }
 
   async stop() {
-    if (!this.sessionActive) return;
+    if (!this.active) return;
 
-    const res = await stopSession();
+    await stopSession();
 
-    this.sessionActive = false;
-
-    return res;
+    this.active = false;
   }
 
   async getAttention(): Promise<number> {
-    if (!this.sessionActive) return 0;
+    if (!this.active) return 0;
 
-    const live = await getLiveInterpreted();
+    try {
+      const live = await getLiveInterpreted();
 
-    return live?.attention_index ?? 0;
+      const raw = live?.model_confidence ?? 0;
+
+      if (!this.initialized) {
+        this.baseline = raw;
+        this.smoothed = raw;
+        this.initialized = true;
+
+        return 50;
+      }
+
+      this.smoothed = 0.8 * this.smoothed + 0.2 * raw;
+      const delta = this.smoothed - this.baseline;
+      let normalized = 50 + delta * 10;
+      normalized = Math.max(0, Math.min(100, normalized));
+
+      return normalized;
+    } catch {
+      return 0;
+    }
   }
 
   isActive() {
-    return this.sessionActive;
+    return this.active;
   }
 }
 

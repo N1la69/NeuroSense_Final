@@ -91,11 +91,12 @@ const HomeScreen = () => {
             </Text>
           </View>
 
+          {/* GAME BUTTONS */}
           <Pressable
-            onPress={() => router.push("/start" as any)}
+            onPress={() => router.push("/games/play/focus-balloon" as any)}
             style={{
-              marginTop: 24,
-              backgroundColor: "#4f7cff",
+              marginTop: 16,
+              backgroundColor: "#22c55e",
               padding: 16,
               borderRadius: 12,
             }}
@@ -103,7 +104,7 @@ const HomeScreen = () => {
             <Text
               style={{ color: "white", textAlign: "center", fontWeight: "700" }}
             >
-              Start First Session
+              Play Focus Balloon Game
             </Text>
           </Pressable>
         </ScrollView>

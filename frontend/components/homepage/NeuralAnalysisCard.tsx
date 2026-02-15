@@ -31,7 +31,7 @@ const NeuralAnalysisCard = ({ summary }: any) => {
       {[
         {
           label: "AI Confidence",
-          value: summary.calibrated_confidence_mean,
+          value: summary?.calibrated_confidence_mean ?? 0,
           icon: "hardware-chip-outline",
           color: "#4f7cff",
         },
@@ -43,74 +43,81 @@ const NeuralAnalysisCard = ({ summary }: any) => {
         // },
         {
           label: "Response Stability",
-          value: summary.stability_score,
+          value: summary?.stability_score ?? 0,
           icon: "analytics-outline",
           color: "#2e7d32",
         },
         {
           label: "Signal Quality",
-          value: summary.signal_quality_mean,
+          value: summary?.signal_quality_mean ?? 0,
           icon: "radio-outline",
           color: "#ed6c02",
         },
-      ].map((metric, i) => (
-        <View key={i} style={{ marginTop: 14 }}>
-          {/* Label Row */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons
-                name={metric.icon as any}
-                size={16}
-                color={metric.color}
-              />
+      ].map((metric, i) => {
+        const safeValue =
+          typeof metric.value === "number" && !isNaN(metric.value)
+            ? metric.value
+            : 0;
+
+        return (
+          <View key={i} style={{ marginTop: 14 }}>
+            {/* Label Row */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons
+                  name={metric.icon as any}
+                  size={16}
+                  color={metric.color}
+                />
+
+                <Text
+                  style={{
+                    marginLeft: 6,
+                    fontSize: 14,
+                    fontWeight: "600",
+                  }}
+                >
+                  {metric.label}
+                </Text>
+              </View>
 
               <Text
                 style={{
-                  marginLeft: 6,
-                  fontSize: 14,
-                  fontWeight: "600",
+                  fontWeight: "700",
+                  color: metric.color,
                 }}
               >
-                {metric.label}
+                {safeValue.toFixed(1)}%
               </Text>
             </View>
 
-            <Text
-              style={{
-                fontWeight: "700",
-                color: metric.color,
-              }}
-            >
-              {metric.value.toFixed(1)}%
-            </Text>
-          </View>
-
-          {/* Progress Bar */}
-          <View
-            style={{
-              marginTop: 6,
-              height: 6,
-              backgroundColor: "#e0e4ff",
-              borderRadius: 4,
-              overflow: "hidden",
-            }}
-          >
+            {/* Progress Bar */}
             <View
               style={{
-                width: `${metric.value}%`,
-                height: "100%",
-                backgroundColor: metric.color,
+                marginTop: 6,
+                height: 6,
+                backgroundColor: "#e0e4ff",
+                borderRadius: 4,
+                overflow: "hidden",
               }}
-            />
+            >
+              <View
+                style={{
+                  width: `${Math.min(100, Math.max(0, safeValue))}%`,
+                  height: "100%",
+                  backgroundColor: metric.color,
+                }}
+              />
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
 
       {/* Divider */}
       <View
@@ -126,14 +133,15 @@ const NeuralAnalysisCard = ({ summary }: any) => {
         <Text style={{ fontSize: 14 }}>
           Reliability Ratio:{" "}
           <Text style={{ fontWeight: "700" }}>
-            {(summary.reliability_ratio * 100).toFixed(0)}%
+            {((summary?.reliability_ratio ?? 0) * 100).toFixed(0)}%
           </Text>
         </Text>
 
         <Text style={{ fontSize: 14, marginTop: 4 }}>
           Data Quality:{" "}
           <Text style={{ fontWeight: "700" }}>
-            {summary.windows_used} / {summary.windows_total} samples used
+            {summary?.windows_used ?? 0} / {summary?.windows_total ?? 0} samples
+            used
           </Text>
         </Text>
       </View>
