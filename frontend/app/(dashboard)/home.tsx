@@ -9,8 +9,14 @@ import {
 import AppShell from "@/components/ui/AppShell";
 import { getChild } from "@/utils/storage";
 import { getDashboard, getLiveInterpreted } from "@/utils/api";
-import ProgressTrend from "@/components/ProgressTrend";
+import ProgressTrend from "@/components/homepage/ProgressTrend";
 import TopBar from "@/components/ui/TopBar";
+import InsightCard from "@/components/homepage/InsightCard";
+import { Ionicons } from "@expo/vector-icons";
+import LatestSessionCard from "@/components/homepage/LatestSessionCard";
+import NsiCard from "@/components/homepage/NsiCard";
+import NeuralAnalysisCard from "@/components/homepage/NeuralAnalysisCard";
+import SessionReports from "@/components/homepage/SessionReports";
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -99,16 +105,7 @@ const HomeScreen = () => {
         </Text>
 
         {/* Insight Card */}
-        <View
-          style={{
-            marginTop: 16,
-            padding: 16,
-            borderRadius: 12,
-            backgroundColor: "#f5f7ff",
-          }}
-        >
-          <Text style={{ fontWeight: "600" }}>{insight}</Text>
-        </View>
+        <InsightCard insight={insight} />
 
         {/* Trend */}
         <View
@@ -123,107 +120,13 @@ const HomeScreen = () => {
         </View>
 
         {/* Latest Session */}
-        <View
-          style={{
-            marginTop: 24,
-            padding: 16,
-            borderRadius: 12,
-            backgroundColor: "#f5f7ff",
-          }}
-        >
-          <Text style={{ fontWeight: "600" }}>Latest Session Summary</Text>
+        <LatestSessionCard latest={latest} scores={scores} />
 
-          <Text
-            style={{
-              marginTop: 8,
-              fontSize: 28,
-              fontWeight: "700",
-              color: latest.color,
-            }}
-          >
-            {Math.round(scores[scores.length - 1] * 100)}%
-          </Text>
+        {/* Neural Stability Index */}
+        {nsi !== null && summary && <NsiCard nsi={nsi} summary={summary} />}
 
-          <Text
-            style={{ marginTop: 6, fontWeight: "600", color: latest.color }}
-          >
-            {latest.label}
-          </Text>
-        </View>
-
-        {/* NSI */}
-        {nsi !== null && summary && (
-          <View
-            style={{
-              marginTop: 24,
-              padding: 16,
-              borderRadius: 12,
-              backgroundColor: "#eef2ff",
-            }}
-          >
-            <Text style={{ fontWeight: "700" }}>Neural Stability Index</Text>
-
-            {(() => {
-              const info = interpretNSIScore(nsi);
-              return (
-                <>
-                  <Text
-                    style={{
-                      marginTop: 8,
-                      fontSize: 34,
-                      fontWeight: "800",
-                      color: info.color,
-                    }}
-                  >
-                    {nsi.toFixed(1)} / 100
-                  </Text>
-
-                  <Text style={{ fontWeight: "700", color: info.color }}>
-                    {info.label}
-                  </Text>
-
-                  <Text style={{ marginTop: 6 }}>{info.explanation}</Text>
-                </>
-              );
-            })()}
-          </View>
-        )}
-
-        {/* SUMMARY BREAKDOWN */}
-        {summary && (
-          <View
-            style={{
-              marginTop: 16,
-              padding: 16,
-              borderRadius: 12,
-              backgroundColor: "#f5f7ff",
-            }}
-          >
-            <Text style={{ fontWeight: "700" }}>Session Breakdown</Text>
-
-            <Text style={{ marginTop: 8 }}>
-              AI Confidence: {summary.calibrated_confidence_mean.toFixed(1)}%
-            </Text>
-
-            <Text>
-              Biomarker Strength: {summary.biomarker_score_mean.toFixed(1)}%
-            </Text>
-
-            <Text>Stability Score: {summary.stability_score.toFixed(1)}%</Text>
-
-            <Text>
-              Signal Quality: {summary.signal_quality_mean.toFixed(1)}%
-            </Text>
-
-            <Text style={{ marginTop: 8, fontWeight: "600" }}>
-              Reliability Ratio: {summary.reliability_ratio}
-            </Text>
-
-            <Text>
-              Windows Used: {summary.windows_used} / {summary.windows_total}
-            </Text>
-          </View>
-        )}
+        {/* Neural Analysis Breakdown */}
+        {summary && <NeuralAnalysisCard summary={summary} />}
 
         {/* Recommendation */}
         {recommendation && recommendation.next_games && (
@@ -245,33 +148,8 @@ const HomeScreen = () => {
           </View>
         )}
 
-        {/* Sessions */}
-        <Text style={{ marginTop: 28, fontSize: 18, fontWeight: "600" }}>
-          Session Reports
-        </Text>
-
-        {sessions.map((s, i) => (
-          <Pressable
-            key={s}
-            onPress={() => router.push(`/session/${s}` as any)}
-            style={{
-              marginTop: 12,
-              padding: 16,
-              borderRadius: 10,
-              backgroundColor: "#f6f8ff",
-            }}
-          >
-            <Text style={{ fontWeight: "600" }}>Session {i + 1}</Text>
-
-            <Text style={{ marginTop: 4 }}>
-              Focus Level: {Math.round(scores[i] * 100)}%
-            </Text>
-
-            <Text style={{ marginTop: 4, color: "#4f7cff", fontWeight: "600" }}>
-              View detailed report →
-            </Text>
-          </Pressable>
-        ))}
+        {/* Session Reports */}
+        <SessionReports sessions={sessions} scores={scores} />
 
         {/* SESSION BUTTONS */}
         <Pressable
