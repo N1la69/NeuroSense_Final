@@ -1,20 +1,16 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
-import FocusBalloonGame from "@/games/focus-balloon/FocusBalloonGame";
-import ThemeManager from "@/games/engine/ThemeManager";
+import FollowBallGame from "@/games/follow-ball/FollowBallGame";
 
 export default function GameScreen() {
   const router = useRouter();
 
-  const { gameId, theme } = useLocalSearchParams();
-  ThemeManager.setTheme(theme === "fun" ? "fun" : "calm");
+  const { gameId } = useLocalSearchParams();
 
   function handleEnd() {
     router.replace("/(dashboard)/home");
   }
 
-  if (gameId === "focus-balloon") {
-    return <FocusBalloonGame onEnd={handleEnd} />;
-  }
+  if (gameId === "follow-ball") return <FollowBallGame onEnd={handleEnd} />;
 
   return null;
 }

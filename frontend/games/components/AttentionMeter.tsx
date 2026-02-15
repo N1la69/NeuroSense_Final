@@ -8,7 +8,7 @@ export default function AttentionMeter({ attention }: { attention: number }) {
     <View
       style={{
         position: "absolute",
-        top: 60,
+        top: 90,
         alignSelf: "center",
         width: 200,
       }}

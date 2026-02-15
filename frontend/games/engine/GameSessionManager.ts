@@ -56,34 +56,8 @@ class GameSessionManager {
 
       const raw = live?.model_confidence ?? 0;
 
-      // initialize smoothing
-      if (!this.initialized) {
-        this.smoothed = raw;
-        this.minSeen = raw;
-        this.maxSeen = raw;
-        this.initialized = true;
-        return 50;
-      }
-
-      // exponential smoothing (stable but responsive)
-      this.smoothed = 0.9 * this.smoothed + 0.1 * raw;
-
-      // update dynamic range
-      this.minSeen = Math.min(this.minSeen, this.smoothed);
-      this.maxSeen = Math.max(this.maxSeen, this.smoothed);
-
-      const range = this.maxSeen - this.minSeen;
-
-      // avoid division instability during first seconds
-      if (range < 0.5) {
-        return 50;
-      }
-
-      // normalize within observed personal range
-      let normalized = ((this.smoothed - this.minSeen) / range) * 100;
-
-      // clamp
-      normalized = Math.max(0, Math.min(100, normalized));
+      // simple stable scaling for 1-channel EEG
+      const normalized = Math.max(0, Math.min(100, raw * 8));
 
       return normalized;
     } catch {

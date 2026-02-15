@@ -92,15 +92,11 @@ const HomeScreen = () => {
           </View>
 
           {/* GAME BUTTONS */}
-          <Pressable
-            onPress={() => router.push("/games/play/focus-balloon?theme=calm")}
-          >
+          <Pressable onPress={() => router.push("/games/play/follow-ball")}>
             <Text>Calm Therapy Mode (Focus Balloo)</Text>
           </Pressable>
 
-          <Pressable
-            onPress={() => router.push("/games/play/focus-balloon?theme=fun")}
-          >
+          <Pressable onPress={() => router.push("/games/play/follow-ball")}>
             <Text>Fun Cartoon Mode (Focus Balloo)</Text>
           </Pressable>
         </ScrollView>
@@ -175,15 +171,11 @@ const HomeScreen = () => {
 
         {/* GAME BUTTONS */}
         {/* GAME BUTTONS */}
-        <Pressable
-          onPress={() => router.push("/games/play/focus-balloon?theme=calm")}
-        >
+        <Pressable onPress={() => router.push("/games/play/follow-ball")}>
           <Text>Calm Therapy Mode (Focus Balloon)</Text>
         </Pressable>
 
-        <Pressable
-          onPress={() => router.push("/games/play/focus-balloon?theme=fun")}
-        >
+        <Pressable onPress={() => router.push("/games/play/follow-ball")}>
           <Text>Fun Cartoon Mode (Focus Balloon)</Text>
         </Pressable>
       </ScrollView>
