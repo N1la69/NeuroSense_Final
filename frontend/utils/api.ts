@@ -60,3 +60,9 @@ export const getDashboard = (childId: string) =>
 
 export const getSessionDetail = (sid: string) =>
   request(`/session/detail/${sid}`);
+
+// ---------- RECOMMENDATIONS ----------
+export const getRecommendation = (childId: string) => {
+  const res = request(`/recommendation/${childId}`);
+  return res;
+};

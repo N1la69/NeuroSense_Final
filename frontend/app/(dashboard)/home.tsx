@@ -1,18 +1,17 @@
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import {
-  interpretNSIScore,
-  interpretOverallProgress,
-  latestLabel,
-} from "@/utils/helpers";
+import { interpretOverallProgress, latestLabel } from "@/utils/helpers";
 import AppShell from "@/components/ui/AppShell";
 import { getChild } from "@/utils/storage";
-import { getDashboard, getLiveInterpreted } from "@/utils/api";
+import {
+  getDashboard,
+  getLiveInterpreted,
+  getRecommendation,
+} from "@/utils/api";
 import ProgressTrend from "@/components/homepage/ProgressTrend";
 import TopBar from "@/components/ui/TopBar";
 import InsightCard from "@/components/homepage/InsightCard";
-import { Ionicons } from "@expo/vector-icons";
 import LatestSessionCard from "@/components/homepage/LatestSessionCard";
 import NsiCard from "@/components/homepage/NsiCard";
 import NeuralAnalysisCard from "@/components/homepage/NeuralAnalysisCard";
@@ -23,10 +22,12 @@ const HomeScreen = () => {
 
   const [scores, setScores] = useState<number[]>([]);
   const [sessions, setSessions] = useState<string[]>([]);
-  // const [nsi, setNsi] = useState<number | null>(null);
-  // const [summary, setSummary] = useState<any>(null);
   const [totalSessions, setTotalSessions] = useState<number>(0);
-  const [recommendation, setRecommendation] = useState<any>(null);
+  const [recommendation, setRecommendation] = useState<{
+    recommended_game?: string;
+    difficulty?: string;
+    reason?: string;
+  } | null>(null);
 
   const [latestSession, setLatestSession] = useState<{
     nsi: number | null;
@@ -43,8 +44,6 @@ const HomeScreen = () => {
 
     setScores(dash.scores || []);
     setSessions(dash.sessions || []);
-    // setNsi(dash.latest_nsi ?? null);
-    // setSummary(dash.latest_summary ?? null);
     setLatestSession({
       nsi: dash.latest_nsi ?? null,
       normalized_nsi: dash.latest_normalized_nsi ?? null,
@@ -54,8 +53,12 @@ const HomeScreen = () => {
     });
     setTotalSessions(dash.total_sessions ?? 0);
 
-    const rec = await getLiveInterpreted();
-    setRecommendation(rec);
+    const rec = await getRecommendation(childId!);
+    if (rec && rec.recommended_game) {
+      setRecommendation(rec);
+    } else {
+      setRecommendation(null);
+    }
   };
 
   useEffect(() => {
@@ -188,7 +191,7 @@ const HomeScreen = () => {
         )}
 
         {/* Recommendation */}
-        {recommendation && recommendation.next_games && (
+        {recommendation?.recommended_game && (
           <View
             style={{
               marginTop: 20,
@@ -197,13 +200,41 @@ const HomeScreen = () => {
               backgroundColor: "#eef2ff",
             }}
           >
-            <Text style={{ fontWeight: "700" }}>Recommended Next Activity</Text>
+            <Text style={{ fontWeight: "700", fontSize: 16 }}>
+              Recommended Therapy
+            </Text>
 
-            {recommendation.next_games.map((g: string) => (
-              <Text key={g} style={{ marginTop: 6 }}>
-                • {g}
+            <Text style={{ marginTop: 8 }}>
+              Game: {String(recommendation.recommended_game).replace(/_/g, " ")}
+            </Text>
+
+            <Text>Difficulty: {recommendation?.difficulty ?? "medium"}</Text>
+
+            <Text style={{ marginTop: 6, color: "#64748b" }}>
+              {recommendation?.reason ?? "Based on neural attention analysis"}
+            </Text>
+
+            <Pressable
+              onPress={() => {
+                const game = recommendation.recommended_game;
+
+                if (game === "follow_the_ball") {
+                  router.push("/games/play/follow-ball");
+                } else if (game === "find_the_color") {
+                  router.push("/games/play/find-color");
+                }
+              }}
+              style={{
+                marginTop: 12,
+                backgroundColor: "#4f7cff",
+                padding: 12,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ color: "white", textAlign: "center" }}>
+                Start Recommended Therapy
               </Text>
-            ))}
+            </Pressable>
           </View>
         )}
 

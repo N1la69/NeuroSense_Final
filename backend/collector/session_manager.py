@@ -31,7 +31,14 @@ class SessionRecorder:
             "features": [],
 
             "summary": {},
-            "nsi": None
+            "nsi": None,
+
+            "game_performance": {
+                "score": None,
+                "accuracy": None,
+                "mistakes": None,
+                "reaction_time_avg": None
+            }
         })
 
 

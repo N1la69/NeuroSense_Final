@@ -37,34 +37,54 @@ def classify_stage(latest):
 # ===============================
 def select_game(stage, latest, history):
 
-    delta = latest.get("delta_from_baseline", 0) or 0
-
+    normalized = latest.get("normalized_nsi", 0)
     stability = latest.get("summary", {}).get("stability_score", 0)
-    reliability = latest.get("summary", {}).get("reliability_ratio", 0)
 
-    # stage → game mapping
-    if stage == 0:
-        return build("follow_the_ball", "easy", 0.95,
-                     "Initial therapy stage. Building basic attention.")
+    game_score = compute_game_score(latest)
 
-    if stage == 1:
-        return build("follow_the_ball", "medium", 0.90,
-                     "Improving attention. Strengthening focus stability.")
+    trend = compute_trend(history)
+    velocity = compute_learning_velocity(history)
 
-    if stage == 2:
-        return build("follow_the_ball", "hard", 0.88,
-                     "Attention unstable. Training sustained attention.")
+    combined_score = (
+        0.6 * normalized +
+        0.25 * stability +
+        0.15 * game_score
+    )
 
-    if stage == 3:
-        return build("find_the_color", "easy", 0.92,
-                     "Attention ready for selective training.")
+    # Low attention
+    if combined_score < 50:
+        return build(
+            "follow_the_ball",
+            "easy",
+            0.92,
+            "Low attention detected. Reinforcing foundational focus."
+        )
 
-    if stage == 4:
-        return build("find_the_color", "medium", 0.94,
-                     "Strong progress. Increasing cognitive challenge.")
+    # Improving
+    if combined_score < 65:
+        return build(
+            "follow_the_ball",
+            "medium",
+            0.93,
+            "Attention improving. Strengthening sustained attention."
+        )
 
-    return build("find_the_color", "hard", 0.96,
-                 "Advanced stage. Maximizing cognitive flexibility.")
+    # Ready for selective training
+    if combined_score < 80:
+        return build(
+            "find_the_color",
+            "medium",
+            0.95,
+            "Ready for selective attention training."
+        )
+
+    # Advanced therapy
+    return build(
+        "find_the_color",
+        "hard",
+        0.97,
+        "High performance detected. Advancing therapy difficulty."
+    )
 
 
 def build(game, difficulty, confidence, reason):
@@ -75,6 +95,64 @@ def build(game, difficulty, confidence, reason):
         "confidence": confidence,
         "reason": reason
     }
+
+
+def compute_trend(history):
+
+    if len(history) < 2:
+        return 0
+
+    values = [
+        s.get("normalized_nsi", 0)
+        for s in history
+        if s.get("normalized_nsi") is not None
+    ]
+
+    if len(values) < 2:
+        return 0
+
+    return values[-1] - values[0]
+
+
+def compute_stability(history):
+
+    scores = [
+        s.get("summary", {}).get("stability_score", 0)
+        for s in history
+    ]
+
+    if not scores:
+        return 0
+
+    return sum(scores) / len(scores)
+
+
+def compute_learning_velocity(history):
+
+    if len(history) < 3:
+        return 0
+
+    first = history[0].get("normalized_nsi", 0)
+    last = history[-1].get("normalized_nsi", 0)
+
+    sessions = len(history)
+
+    return (last - first) / sessions
+
+
+def compute_game_score(latest):
+
+    perf = latest.get("game_performance", {})
+
+    accuracy = perf.get("accuracy") or 0
+    score = perf.get("score") or 0
+    mistakes = perf.get("mistakes") or 0
+
+    return (
+        0.5 * accuracy * 100 +
+        0.4 * min(score / 200, 1) * 100 +
+        0.1 * max(0, 100 - mistakes * 10)
+    )
 
 
 # ===============================
