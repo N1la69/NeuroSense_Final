@@ -54,10 +54,17 @@ class GameSessionManager {
     try {
       const live = await getLiveInterpreted();
 
-      const raw = live?.model_confidence ?? 0;
+      const confidence = live?.model_confidence ?? 0;
+      const quality = live?.signal_quality ?? 0;
+      const engagement = live?.engagement ?? 0;
 
-      // simple stable scaling for 1-channel EEG
-      const normalized = Math.max(0, Math.min(100, raw * 8));
+      // Combine multiple neural reliability signals
+      const combined = confidence * quality * (0.5 + engagement);
+
+      // Scale for 1-channel EEG
+      let normalized = combined * 8;
+
+      normalized = Math.max(0, Math.min(100, normalized));
 
       return normalized;
     } catch {

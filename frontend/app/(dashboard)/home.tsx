@@ -92,17 +92,54 @@ const HomeScreen = () => {
           </View>
 
           {/* GAME BUTTONS */}
-          <Pressable
-            onPress={() => router.push("/games/play/follow-ball?theme=calm")}
+          <View
+            style={{
+              marginTop: 20,
+              padding: 16,
+              borderRadius: 12,
+              backgroundColor: "#eef2ff",
+            }}
           >
-            <Text>Calm Therapy Mode (Follow the ball)</Text>
-          </Pressable>
+            <Text
+              style={{
+                fontWeight: "700",
+                marginBottom: 10,
+                fontSize: 16,
+              }}
+            >
+              Start Therapy Session
+            </Text>
 
-          <Pressable
-            onPress={() => router.push("/games/play/follow-ball?theme=fun")}
-          >
-            <Text>Fun Engagement Mode (Follow the ball)</Text>
-          </Pressable>
+            <Pressable
+              onPress={() => router.push("/games/play/follow-ball")}
+              style={{
+                backgroundColor: "#4f7cff",
+                padding: 14,
+                borderRadius: 10,
+                marginBottom: 10,
+              }}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  textAlign: "center",
+                  fontWeight: "600",
+                }}
+              >
+                Begin Follow-Ball Therapy
+              </Text>
+            </Pressable>
+
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#64748b",
+                textAlign: "center",
+              }}
+            >
+              Theme adapts automatically based on attention stability
+            </Text>
+          </View>
         </ScrollView>
       </AppShell>
     );
@@ -174,17 +211,54 @@ const HomeScreen = () => {
         <SessionReports sessions={sessions} scores={scores} />
 
         {/* GAME BUTTONS */}
-        <Pressable
-          onPress={() => router.push("/games/play/follow-ball?theme=calm")}
+        <View
+          style={{
+            marginTop: 20,
+            padding: 16,
+            borderRadius: 12,
+            backgroundColor: "#eef2ff",
+          }}
         >
-          <Text>Calm Therapy Mode (Follow the ball)</Text>
-        </Pressable>
+          <Text
+            style={{
+              fontWeight: "700",
+              marginBottom: 10,
+              fontSize: 16,
+            }}
+          >
+            Start Therapy Session
+          </Text>
 
-        <Pressable
-          onPress={() => router.push("/games/play/follow-ball?theme=fun")}
-        >
-          <Text>Fun Engagement Mode (Follow the ball)</Text>
-        </Pressable>
+          <Pressable
+            onPress={() => router.push("/games/play/follow-ball")}
+            style={{
+              backgroundColor: "#4f7cff",
+              padding: 14,
+              borderRadius: 10,
+              marginBottom: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: "white",
+                textAlign: "center",
+                fontWeight: "600",
+              }}
+            >
+              Begin Follow-Ball Therapy
+            </Text>
+          </Pressable>
+
+          <Text
+            style={{
+              fontSize: 12,
+              color: "#64748b",
+              textAlign: "center",
+            }}
+          >
+            Theme adapts automatically based on attention stability
+          </Text>
+        </View>
       </ScrollView>
     </AppShell>
   );

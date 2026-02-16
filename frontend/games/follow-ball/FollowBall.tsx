@@ -14,9 +14,13 @@ export default function FollowBall({ x, y, size, color }: any) {
         height: size,
         borderRadius: size / 2,
         backgroundColor: color,
+
         shadowColor: color,
-        shadowOpacity: 0.8,
+        shadowOpacity: 0.9,
         shadowRadius: theme.glow,
+
+        borderWidth: 3,
+        borderColor: "rgba(255,255,255,0.6)",
       }}
     />
   );

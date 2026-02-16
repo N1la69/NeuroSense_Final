@@ -3,9 +3,9 @@ import { View, Text, Dimensions } from "react-native";
 import GameSessionManager from "@/games/engine/GameSessionManager";
 import FollowBall from "./FollowBall";
 import AttentionMeter from "@/games/components/AttentionMeter";
-import RewardStar from "./RewardStar";
 import ThemeManager from "../engine/ThemeManager";
-import GameBackground from "./GameBackground";
+import TherapyBackground from "./TherapyBackground";
+import FollowBallIntro from "./FollowBallIntro";
 
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
@@ -13,13 +13,14 @@ const HEIGHT = Dimensions.get("window").height;
 const SESSION_DURATION = 60000;
 
 export default function FollowBallGame({ onEnd }: any) {
-  const [attention, setAttention] = useState(50);
   const attentionRef = useRef(50);
-  const sustainedRef = useRef(0);
+  const stableAttentionRef = useRef(0);
+  const sessionStoppedRef = useRef(false);
 
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [stars, setStars] = useState<any[]>([]);
+  const [started, setStarted] = useState(false);
+
+  const [attention, setAttention] = useState(50);
+  const [timeLeft, setTimeLeft] = useState(SESSION_DURATION / 1000);
 
   const [ball, setBall] = useState({
     x: WIDTH / 2,
@@ -32,18 +33,21 @@ export default function FollowBallGame({ onEnd }: any) {
   const animationRef = useRef<number>(0);
 
   useEffect(() => {
-    startSession();
+    if (!started) return;
 
+    startSession();
     startPhysics();
 
     const colorTimer = setInterval(changeColor, 2000);
 
     return () => {
-      cancelAnimationFrame(animationRef.current!);
+      cancelAnimationFrame(animationRef.current);
+
       clearInterval(colorTimer);
+
       GameSessionManager.stop();
     };
-  }, []);
+  }, [started]);
 
   async function startSession() {
     const startTime = Date.now();
@@ -68,34 +72,34 @@ export default function FollowBallGame({ onEnd }: any) {
       setTimeLeft(remaining);
     }, 200);
 
-    setTimeout(async () => {
+    setTimeout(() => {
+      if (sessionStoppedRef.current) return;
+
+      sessionStoppedRef.current = true;
+
       clearInterval(poll);
       clearInterval(timer);
 
-      await GameSessionManager.stop();
+      cancelAnimationFrame(animationRef.current);
 
-      setTimeout(onEnd, 1500);
+      GameSessionManager.stop();
+
+      onEnd();
     }, SESSION_DURATION);
   }
 
   function startPhysics() {
     function loop() {
       const att = attentionRef.current;
+
+      if (att > 70) stableAttentionRef.current++;
+      else stableAttentionRef.current = 0;
+
+      if (stableAttentionRef.current > 600) ThemeManager.setTheme("fun");
+
+      if (stableAttentionRef.current < 120) ThemeManager.setTheme("calm");
+
       const theme = ThemeManager.getTheme();
-
-      if (att > 65) sustainedRef.current += 1;
-      else sustainedRef.current = 0;
-
-      if (sustainedRef.current === 120) {
-        setStars((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            x: ball.x,
-            y: ball.y,
-          },
-        ]);
-      }
 
       const difficulty = (0.6 + att / 80) * theme.speedMultiplier;
       const speedMultiplier = difficulty;
@@ -107,9 +111,11 @@ export default function FollowBallGame({ onEnd }: any) {
         let vx = prev.vx;
         let vy = prev.vy;
 
-        if (nx < 40 || nx > WIDTH - 40) vx *= -1;
+        const radius = 30;
 
-        if (ny < 120 || ny > HEIGHT - 40) vy *= -1;
+        if (nx < 40 || nx > WIDTH - radius) vx *= -1;
+
+        if (ny < 120 || ny > HEIGHT - radius) vy *= -1;
 
         return {
           ...prev,
@@ -119,8 +125,6 @@ export default function FollowBallGame({ onEnd }: any) {
           vy,
         };
       });
-
-      setScore((prev) => prev + att * 0.02);
 
       animationRef.current = requestAnimationFrame(loop);
     }
@@ -138,9 +142,13 @@ export default function FollowBallGame({ onEnd }: any) {
     }));
   }
 
+  if (!started) {
+    return <FollowBallIntro onStart={() => setStarted(true)} />;
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#eef2ff" }}>
-      <GameBackground />
+      <TherapyBackground />
 
       <Text
         style={{
@@ -154,23 +162,7 @@ export default function FollowBallGame({ onEnd }: any) {
         Time: {timeLeft}s
       </Text>
 
-      <Text
-        style={{
-          position: "absolute",
-          top: 70,
-          alignSelf: "center",
-          fontSize: 18,
-          fontWeight: "600",
-        }}
-      >
-        Score: {Math.floor(score)}
-      </Text>
-
       <AttentionMeter attention={attention} />
-
-      {stars.map((s) => (
-        <RewardStar key={s.id} x={s.x} y={s.y} />
-      ))}
 
       <FollowBall x={ball.x} y={ball.y} size={60} color={ball.color} />
     </View>
