@@ -36,6 +36,12 @@ export default function FindColorGame({ onEnd }: any) {
   const [timeLeft, setTimeLeft] = useState(SESSION_DURATION / 1000);
   const [roundTime, setRoundTime] = useState(ROUND_TIME / 1000);
 
+  const [difficulty, setDifficulty] = useState({
+    gridSize: 12,
+    colorCount: 6,
+    roundTime: 10,
+  });
+
   useEffect(() => {
     if (!started) return;
 
@@ -77,15 +83,46 @@ export default function FindColorGame({ onEnd }: any) {
     }, SESSION_DURATION);
   }
 
-  function nextRound() {
-    const t = COLORS[Math.floor(Math.random() * COLORS.length)];
+  function updateDifficulty(newScore: number) {
+    if (newScore >= 230) {
+      setDifficulty({
+        gridSize: 24,
+        colorCount: 12,
+        roundTime: 7,
+      });
+    } else if (newScore >= 130) {
+      setDifficulty({
+        gridSize: 20,
+        colorCount: 10,
+        roundTime: 8,
+      });
+    } else if (newScore >= 50) {
+      setDifficulty({
+        gridSize: 16,
+        colorCount: 8,
+        roundTime: 9,
+      });
+    } else {
+      setDifficulty({
+        gridSize: 12,
+        colorCount: 6,
+        roundTime: 10,
+      });
+    }
+  }
+
+  function nextRound(diff = difficulty) {
+    const usableColors = COLORS.slice(0, diff.colorCount);
+    const t = usableColors[Math.floor(Math.random() * usableColors.length)];
 
     setTarget(t);
 
     const newGrid = [];
 
-    for (let i = 0; i < 16; i++) {
-      newGrid.push(COLORS[Math.floor(Math.random() * COLORS.length)]);
+    for (let i = 0; i < diff.gridSize; i++) {
+      newGrid.push(
+        usableColors[Math.floor(Math.random() * usableColors.length)],
+      );
     }
 
     newGrid[Math.floor(Math.random() * newGrid.length)] = t;
@@ -101,7 +138,7 @@ export default function FindColorGame({ onEnd }: any) {
       clearInterval(roundTimerRef.current);
     }
 
-    setRoundTime(ROUND_TIME / 1000);
+    setRoundTime(difficulty.roundTime);
 
     roundTimerRef.current = setInterval(() => {
       setRoundTime((prev) => {
@@ -112,11 +149,44 @@ export default function FindColorGame({ onEnd }: any) {
             roundTimerRef.current = null;
           }
 
-          setScore((s) => Math.max(0, s - 5));
+          setScore((prev) => {
+            const newScore = Math.max(0, prev - 5);
 
-          nextRound();
+            updateDifficulty(newScore);
 
-          return ROUND_TIME / 1000;
+            nextRound({
+              gridSize:
+                newScore >= 230
+                  ? 24
+                  : newScore >= 130
+                    ? 20
+                    : newScore >= 50
+                      ? 16
+                      : 12,
+
+              colorCount:
+                newScore >= 230
+                  ? 12
+                  : newScore >= 130
+                    ? 10
+                    : newScore >= 50
+                      ? 8
+                      : 6,
+
+              roundTime:
+                newScore >= 230
+                  ? 7
+                  : newScore >= 130
+                    ? 8
+                    : newScore >= 50
+                      ? 9
+                      : 10,
+            });
+
+            return newScore;
+          });
+
+          return difficulty.roundTime;
         }
 
         return prev - 1;
@@ -131,10 +201,30 @@ export default function FindColorGame({ onEnd }: any) {
       roundTimerRef.current = null;
     }
 
-    if (color === target) setScore((s) => s + 10);
-    else setScore((s) => Math.max(0, s - 5));
+    setScore((prev) => {
+      const newScore = color === target ? prev + 10 : Math.max(0, prev - 5);
 
-    nextRound();
+      updateDifficulty(newScore);
+
+      nextRound({
+        gridSize:
+          newScore >= 230
+            ? 24
+            : newScore >= 130
+              ? 20
+              : newScore >= 50
+                ? 16
+                : 12,
+
+        colorCount:
+          newScore >= 230 ? 12 : newScore >= 130 ? 10 : newScore >= 50 ? 8 : 6,
+
+        roundTime:
+          newScore >= 230 ? 7 : newScore >= 130 ? 8 : newScore >= 50 ? 9 : 10,
+      });
+
+      return newScore;
+    });
   }
 
   useEffect(() => {
@@ -161,6 +251,22 @@ export default function FindColorGame({ onEnd }: any) {
       <Text style={{ fontSize: 22 }}>Time: {timeLeft}s</Text>
 
       <Text style={{ fontSize: 18 }}>Score: {score}</Text>
+
+      <Text
+        style={{
+          fontSize: 14,
+          color: "#64748b",
+        }}
+      >
+        Difficulty:{" "}
+        {difficulty.gridSize === 12
+          ? "Easy"
+          : difficulty.gridSize === 16
+            ? "Medium"
+            : difficulty.gridSize === 20
+              ? "Hard"
+              : "Expert"}
+      </Text>
 
       <View
         style={{
