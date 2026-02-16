@@ -57,7 +57,7 @@ def api_start():
     data = request.json or {}
 
     childId = data.get("childId")
-    game = data.get("game", "Follow the Animal")
+    game = data.get("game", "follow_the_ball")
 
     if not childId:
         return jsonify({"error": "childId required"}), 400

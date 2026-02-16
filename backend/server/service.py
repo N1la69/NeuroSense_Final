@@ -1,8 +1,9 @@
 import threading
 from collector.session_manager import SessionRecorder
 from collector.serial_reader import start_stream, stop_stream
+from server.recommendation_service import generate_recommendation
 
-# ----- GLOBAL STATE -----
+# GLOBAL STATE
 current_recorder = None
 lock = threading.Lock()
 
@@ -11,15 +12,18 @@ running = False
 
 
 def _callback(sample):
-    """Called for every EEG sample"""
+
     global current_recorder, live_features
 
-    if current_recorder:
-        current_recorder.on_sample(sample)
+    recorder = current_recorder
 
-        # expose latest features for API
-        if current_recorder.feature_cache:
-            live_features = current_recorder.feature_cache[-1]
+    if recorder is None:
+        return
+
+    recorder.on_sample(sample)
+
+    if recorder.feature_cache:
+        live_features = recorder.feature_cache[-1]
 
 
 def start_session(user_id, game):
@@ -27,17 +31,19 @@ def start_session(user_id, game):
     global current_recorder, running
 
     with lock:
-        if running:
+
+        if current_recorder is not None:
             return {"error": "Session already running"}
 
-        current_recorder = SessionRecorder(user_id, game)
+        recorder = SessionRecorder(user_id, game)
+
+        current_recorder = recorder
         running = True
 
-        # Use serial_reader lifecycle manager
         start_stream(_callback)
 
         return {
-            "sessionId": current_recorder.session_id,
+            "sessionId": recorder.session_id,
             "status": "started"
         }
 
@@ -46,20 +52,46 @@ def stop_session():
 
     global current_recorder, running
 
-    if current_recorder is None:
-        return {"status": "no active session"}
+    # ATOMIC LOCK
+    with lock:
 
-    stop_stream()   # <-- ADD THIS
+        recorder = current_recorder
 
-    sid = current_recorder.close()
+        # Already stopped
+        if recorder is None:
+            print("[STOP] Already stopped")
+            return {"status": "already stopped"}
 
-    current_recorder = None
-    running = False
+        # CLEAR STATE IMMEDIATELY
+        current_recorder = None
+        running = False
+
+    # Stop stream outside lock
+    try:
+        stop_stream()
+    except Exception as e:
+        print("[STREAM STOP ERROR]", e)
+
+    # Close recorder safely
+    try:
+        sid = recorder.close()
+        userId = recorder.user_id
+    except Exception as e:
+        print("[RECORDER CLOSE ERROR]", e)
+        return {"error": "close failed"}
+
+    # Generate recommendation
+    try:
+        generate_recommendation(userId, sid)
+        print(f"[RECOMMEND] Generated for {userId}")
+    except Exception as e:
+        print("[RECOMMEND ERROR]", e)
 
     return {"sessionId": sid}
 
 
 def get_live():
+
     if not running:
         return {"error": "No active session"}
 

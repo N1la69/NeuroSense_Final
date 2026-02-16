@@ -12,4 +12,4 @@ db = client["neurosense"]
 sessions = db["sessions"]
 users = db["users"]
 parents = db["parents"]
-
+recommendations = db["recommendations"]
