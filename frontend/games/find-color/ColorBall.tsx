@@ -5,8 +5,8 @@ export default function ColorBall({ color, onPress }: any) {
     <Pressable onPress={onPress}>
       <View
         style={{
-          width: 70,
-          height: 70,
+          width: 60,
+          height: 60,
           borderRadius: 35,
           backgroundColor: color,
           margin: 10,

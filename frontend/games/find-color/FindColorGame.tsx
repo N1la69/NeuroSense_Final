@@ -1,29 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, Text } from "react-native";
 import GameSessionManager from "@/games/engine/GameSessionManager";
 import ColorGrid from "./ColorGrid";
 import FindColorIntro from "./FindColorIntro";
-import AttentionMeter from "@/games/components/AttentionMeter";
+import ColorGameBackground from "./ColorGameBackground";
 
-const COLORS = ["red", "blue", "green", "yellow", "purple", "orange"];
+const COLORS = [
+  "#ef4444", // red
+  "#3b82f6", // blue
+  "#22c55e", // green
+  "#eab308", // yellow
+  "#a855f7", // purple
+  "#f97316", // orange
+  "#06b6d4", // cyan
+  "#ec4899", // pink
+  "#84cc16", // lime
+  "#f43f5e", // rose
+  "#6366f1", // indigo
+  "#14b8a6", // teal
+];
 
 const SESSION_DURATION = 60000;
 const ROUND_TIME = 5000;
 
 export default function FindColorGame({ onEnd }: any) {
+  const roundTimerRef = useRef<number | null>(null);
+  const sessionTimerRef = useRef<number | null>(null);
+  const sessionEndedRef = useRef(false);
+
   const [started, setStarted] = useState(false);
-
   const [score, setScore] = useState(0);
-
   const [target, setTarget] = useState("red");
-
   const [grid, setGrid] = useState<string[]>([]);
 
-  const [timeLeft, setTimeLeft] = useState(60);
-
-  const [roundTime, setRoundTime] = useState(5);
-
-  const [attention, setAttention] = useState(50);
+  const [timeLeft, setTimeLeft] = useState(SESSION_DURATION / 1000);
+  const [roundTime, setRoundTime] = useState(ROUND_TIME / 1000);
 
   useEffect(() => {
     if (!started) return;
@@ -37,21 +48,28 @@ export default function FindColorGame({ onEnd }: any) {
 
     await GameSessionManager.start("Find Color");
 
-    const poll = setInterval(async () => {
-      const att = await GameSessionManager.getAttention();
-
-      setAttention(att);
-    }, 500);
-
-    const sessionTimer = setInterval(() => {
+    sessionTimerRef.current = setInterval(() => {
       const elapsed = Date.now() - startTime;
 
       setTimeLeft(Math.max(0, Math.ceil((SESSION_DURATION - elapsed) / 1000)));
-    }, 200);
+    }, 250);
 
     setTimeout(() => {
-      clearInterval(poll);
-      clearInterval(sessionTimer);
+      if (sessionEndedRef.current) return;
+
+      sessionEndedRef.current = true;
+
+      // stop round timer
+      if (roundTimerRef.current !== null) {
+        clearInterval(roundTimerRef.current);
+        roundTimerRef.current = null;
+      }
+
+      // stop session timer
+      if (sessionTimerRef.current !== null) {
+        clearInterval(sessionTimerRef.current);
+        sessionTimerRef.current = null;
+      }
 
       GameSessionManager.stop();
 
@@ -66,11 +84,11 @@ export default function FindColorGame({ onEnd }: any) {
 
     const newGrid = [];
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 16; i++) {
       newGrid.push(COLORS[Math.floor(Math.random() * COLORS.length)]);
     }
 
-    newGrid[Math.floor(Math.random() * 12)] = t;
+    newGrid[Math.floor(Math.random() * newGrid.length)] = t;
 
     setGrid(newGrid);
 
@@ -78,18 +96,27 @@ export default function FindColorGame({ onEnd }: any) {
   }
 
   function startRoundTimer() {
-    setRoundTime(5);
+    // CLEAR any existing timer first
+    if (roundTimerRef.current) {
+      clearInterval(roundTimerRef.current);
+    }
 
-    const timer = setInterval(() => {
+    setRoundTime(ROUND_TIME / 1000);
+
+    roundTimerRef.current = setInterval(() => {
       setRoundTime((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
+          // stop current timer
+          if (roundTimerRef.current) {
+            clearInterval(roundTimerRef.current);
+            roundTimerRef.current = null;
+          }
 
-          setScore((s) => s - 5);
+          setScore((s) => Math.max(0, s - 5));
 
           nextRound();
 
-          return 5;
+          return ROUND_TIME / 1000;
         }
 
         return prev - 1;
@@ -98,11 +125,26 @@ export default function FindColorGame({ onEnd }: any) {
   }
 
   function handleSelect(color: string) {
+    // stop existing timer
+    if (roundTimerRef.current) {
+      clearInterval(roundTimerRef.current);
+      roundTimerRef.current = null;
+    }
+
     if (color === target) setScore((s) => s + 10);
-    else setScore((s) => s - 5);
+    else setScore((s) => Math.max(0, s - 5));
 
     nextRound();
   }
+
+  useEffect(() => {
+    return () => {
+      if (roundTimerRef.current !== null) clearInterval(roundTimerRef.current);
+
+      if (sessionTimerRef.current !== null)
+        clearInterval(sessionTimerRef.current);
+    };
+  }, []);
 
   if (!started) return <FindColorIntro onStart={() => setStarted(true)} />;
 
@@ -114,22 +156,41 @@ export default function FindColorGame({ onEnd }: any) {
         paddingTop: 40,
       }}
     >
+      <ColorGameBackground />
+
       <Text style={{ fontSize: 22 }}>Time: {timeLeft}s</Text>
 
       <Text style={{ fontSize: 18 }}>Score: {score}</Text>
 
-      <Text
+      <View
         style={{
-          fontSize: 20,
-          marginTop: 10,
+          marginTop: 20,
+          alignItems: "center",
         }}
       >
-        Find: {target.toUpperCase()}
-      </Text>
+        <Text
+          style={{
+            fontSize: 18,
+            color: "#64748b",
+          }}
+        >
+          Find this color
+        </Text>
+
+        <View
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: target,
+            marginTop: 10,
+            borderWidth: 3,
+            borderColor: "white",
+          }}
+        />
+      </View>
 
       <Text>Round Time: {roundTime}s</Text>
-
-      <AttentionMeter attention={attention} />
 
       <ColorGrid colors={grid} onSelect={handleSelect} />
     </View>
