@@ -249,6 +249,26 @@ const HomeScreen = () => {
             </Text>
           </Pressable>
 
+          <Pressable
+            onPress={() => router.push("/games/play/find-color")}
+            style={{
+              marginTop: 12,
+              backgroundColor: "#22c55e",
+              padding: 16,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: "white",
+                textAlign: "center",
+                fontWeight: "700",
+              }}
+            >
+              Test Game: Find the Color
+            </Text>
+          </Pressable>
+
           <Text
             style={{
               fontSize: 12,
