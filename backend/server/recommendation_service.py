@@ -1,18 +1,29 @@
 from datetime import datetime
 from server.db import sessions, recommendations
 
+def safe_float(value, default=0.0):
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except:
+        return default
+
 
 # ===============================
 # THERAPY STAGE CLASSIFIER
 # ===============================
 def classify_stage(latest):
 
-    normalized = latest.get("normalized_nsi")
-    stability = latest.get("summary", {}).get("stability_score", 0)
-    reliability = latest.get("summary", {}).get("reliability_ratio", 0)
+    normalized = safe_float(
+        latest.get("normalized_nsi"),
+        safe_float(latest.get("nsi"), 50.0)
+    )
 
-    if normalized is None:
-        return 0
+    stability = safe_float(
+        latest.get("summary", {}).get("stability_score"),
+        50.0
+    )
 
     if normalized < 40:
         return 0
@@ -37,13 +48,23 @@ def classify_stage(latest):
 # ===============================
 def select_game(stage, latest, history):
 
-    normalized = latest.get("normalized_nsi", 0)
-    stability = latest.get("summary", {}).get("stability_score", 0)
+    normalized = safe_float(
+        latest.get("normalized_nsi"),
+        safe_float(latest.get("nsi"), 50.0)
+    )
 
-    game_score = compute_game_score(latest)
+    stability = safe_float(
+        latest.get("summary", {}).get("stability_score"),
+        50.0
+    )
 
-    trend = compute_trend(history)
-    velocity = compute_learning_velocity(history)
+    game_score = safe_float(
+        compute_game_score(latest),
+        50.0
+    )
+
+    trend = safe_float(compute_trend(history), 0.0)
+    velocity = safe_float(compute_learning_velocity(history), 0.0)
 
     combined_score = (
         0.6 * normalized +
@@ -142,16 +163,16 @@ def compute_learning_velocity(history):
 
 def compute_game_score(latest):
 
-    perf = latest.get("game_performance", {})
+    perf = latest.get("game_performance") or {}
 
-    accuracy = perf.get("accuracy") or 0
-    score = perf.get("score") or 0
-    mistakes = perf.get("mistakes") or 0
+    accuracy = safe_float(perf.get("accuracy"), 0.0)
+    score = safe_float(perf.get("score"), 0.0)
+    mistakes = safe_float(perf.get("mistakes"), 0.0)
 
     return (
         0.5 * accuracy * 100 +
-        0.4 * min(score / 200, 1) * 100 +
-        0.1 * max(0, 100 - mistakes * 10)
+        0.4 * min(score / 200.0, 1.0) * 100 +
+        0.1 * max(0.0, 100.0 - mistakes * 10.0)
     )
 
 
@@ -161,7 +182,7 @@ def compute_game_score(latest):
 def generate_recommendation(userId, sessionId=None):
 
     latest = sessions.find_one(
-        {"userId": userId, "normalized_nsi": {"$ne": None}},
+        {"userId": userId},
         sort=[("startTime", -1)]
     )
 
@@ -170,7 +191,7 @@ def generate_recommendation(userId, sessionId=None):
 
     history = list(
         sessions.find(
-            {"userId": userId, "normalized_nsi": {"$ne": None}}
+            {"userId": userId}
         ).sort("startTime", 1)
     )
 
