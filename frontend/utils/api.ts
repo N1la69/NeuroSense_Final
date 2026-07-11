@@ -1,6 +1,6 @@
 import { AddChildPayload, LoginPayload, SignupPayload } from "./types";
 
-const BASE = "http://192.168.31.17:5000/api"; // LAPTOP IP
+const BASE = "http://10.90.62.107:5000/api"; // LAPTOP IP
 
 async function request(path: string, options: RequestInit = {}) {
   const headers: any = {

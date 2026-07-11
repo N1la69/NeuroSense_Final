@@ -193,6 +193,8 @@ class SessionRecorder:
         raw_mc = [f["model_confidence"] for f in clean]
         bs = [f["biomarker_score"] for f in clean]
         sq = [f["signal_quality"] for f in clean]
+        alpha_vals = [f.get("alpha", 0) for f in clean]
+        alpha_mean = sum(alpha_vals) / len(alpha_vals) if alpha_vals else 0.0
 
         raw_mean = sum(raw_mc) / len(raw_mc)
 
@@ -227,6 +229,7 @@ class SessionRecorder:
             "biomarker_score_mean": round(bs_mean, 2),
             "stability_score": round(stability_score, 2),
             "signal_quality_mean": round(sqi_mean, 2),
+            "alpha_mean": round(alpha_mean, 3),
             "windows_total": total_windows,
             "windows_used": clean_count,
             "reliability_ratio": round(reliability_ratio, 2)

@@ -1,7 +1,7 @@
 import serial
 import threading
 
-PORT = "COM5"
+PORT = "COM3"
 BAUD = 115200
 
 running = False
